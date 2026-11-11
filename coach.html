@@ -181,6 +181,9 @@ label .field, label .pass { margin-top: 0.4rem; }
   border-radius: 1rem; box-shadow: inset 0 0 0 1px var(--line); font-size: 0.8125rem;
 }
 .chip.active { background: var(--primary); color: var(--primary-fg); box-shadow: 0 8px 24px rgba(200, 245, 74, 0.22); }
+.chip.off { color: var(--muted); }
+.chip .meta { font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); }
+.chip.active .meta { color: inherit; opacity: 0.8; }
 .muscle-row { display: flex; flex-wrap: wrap; gap: 0.35rem; }
 .pill {
   padding: 0.35rem 0.7rem; border-radius: 999px; font-size: 0.75rem;
@@ -222,7 +225,7 @@ textarea.notes {
 <body>
 <div id="app"></div>
 <script>
-const DAYS = [{"id":"push","name":"Push","short":"Push","rest":false,"exercises":[{"id":"push-incline","name":"Incline DB press","sets":3,"reps":"8–12","muscles":["chest"]},{"id":"push-flat","name":"Flat machine or DB press","sets":3,"reps":"10–15","muscles":["chest"]},{"id":"push-fly","name":"High-to-low cable fly","sets":2,"reps":"12–20","muscles":["chest"]},{"id":"push-shoulder","name":"Seated DB shoulder press","sets":3,"reps":"8–12","muscles":["shoulders"]},{"id":"push-lat-db","name":"DB lateral raise","sets":3,"reps":"12–20","muscles":["shoulders"]},{"id":"push-lat-cable","name":"Cable lateral raise","sets":3,"reps":"15–25","muscles":["shoulders"]},{"id":"push-oh","name":"Overhead cable extension","sets":3,"reps":"10–15","muscles":["triceps"]},{"id":"push-down","name":"Rope pushdown","sets":3,"reps":"12–20","muscles":["triceps"]}]},{"id":"pull","name":"Pull","short":"Pull","rest":false,"exercises":[{"id":"pull-incline","name":"Incline DB curl","sets":3,"reps":"10–15","muscles":["biceps"]},{"id":"pull-ez","name":"EZ-bar curl","sets":3,"reps":"8–12","muscles":["biceps"]},{"id":"pull-hammer","name":"Hammer curl","sets":3,"reps":"10–15","muscles":["biceps"]},{"id":"pull-down","name":"Pull-up or wide pulldown","sets":3,"reps":"8–12","muscles":["back"]},{"id":"pull-row","name":"Chest-supported row","sets":3,"reps":"10–15","muscles":["back"]},{"id":"pull-straight","name":"Straight-arm pulldown","sets":2,"reps":"12–20","muscles":["back"]},{"id":"pull-rear","name":"Rear-delt fly","sets":3,"reps":"15–25","muscles":["rear-delts"]},{"id":"pull-face","name":"Face pull","sets":3,"reps":"15–25","muscles":["rear-delts"]}]},{"id":"legs","name":"Legs","short":"Legs","rest":false,"exercises":[{"id":"legs-hack","name":"Hack squat or high-bar squat","sets":4,"reps":"8–12","muscles":["quads"]},{"id":"legs-glute","name":"Glute drive or hip thrust","sets":3,"reps":"10–15","muscles":["glutes"],"cue":"Feet set so the glutes lock out, not the quads."},{"id":"legs-add","name":"Machine hip adduction","sets":3,"reps":"12–20","muscles":["adductors"]},{"id":"legs-ext","name":"Leg extension","sets":3,"reps":"12–20","muscles":["quads"],"cue":"Pause at the top."},{"id":"legs-curl","name":"Lying leg curl","sets":3,"reps":"10–15","muscles":["hamstrings"]},{"id":"legs-calf","name":"Standing calf raise","sets":4,"reps":"10–20","muscles":["calves"]},{"id":"legs-lat","name":"Lean-away or machine lateral","sets":3,"reps":"15–25","muscles":["shoulders"]}]},{"id":"rest-thu","name":"Rest","short":"Rest","rest":true,"exercises":[]},{"id":"quads","name":"Quads + chest","short":"Quads","rest":false,"exercises":[{"id":"quads-press","name":"Leg press","sets":4,"reps":"10–15","muscles":["quads"]},{"id":"quads-bulg","name":"Bulgarian split squat","sets":3,"reps":"10–15","muscles":["quads"],"cue":"Per leg. Last set at 2 reps in reserve."},{"id":"quads-single","name":"Single-leg extension","sets":2,"reps":"15–20","muscles":["quads"]},{"id":"quads-add","name":"Machine hip adduction","sets":3,"reps":"15–25","muscles":["adductors"]},{"id":"quads-pec","name":"Pec deck","sets":2,"reps":"12–20","muscles":["chest"]},{"id":"quads-fly","name":"Low-to-high cable fly","sets":2,"reps":"15–20","muscles":["chest"]},{"id":"quads-dip","name":"Chest-biased dip","sets":3,"reps":"10–15","muscles":["chest"]},{"id":"quads-kick","name":"Cable kickback","sets":3,"reps":"15–20","muscles":["triceps"]}]},{"id":"back","name":"Back + hamstrings","short":"Back","rest":false,"exercises":[{"id":"back-rdl","name":"Romanian deadlift","sets":4,"reps":"8–12","muscles":["hamstrings","glutes"],"cue":"Stop when the hamstrings give out, not the lower back."},{"id":"back-seated","name":"Seated leg curl","sets":4,"reps":"10–15","muscles":["hamstrings"]},{"id":"back-lying","name":"Lying leg curl","sets":3,"reps":"12–20","muscles":["hamstrings"]},{"id":"back-down","name":"Neutral-grip pulldown","sets":3,"reps":"10–15","muscles":["back"]},{"id":"back-row","name":"One-arm row","sets":3,"reps":"10–15","muscles":["back"]},{"id":"back-curl","name":"Bayesian or preacher curl","sets":3,"reps":"12–15","muscles":["biceps"]},{"id":"back-calf","name":"Seated calf raise","sets":4,"reps":"15–25","muscles":["calves"]}]},{"id":"rest-sun","name":"Rest","short":"Rest","rest":true,"exercises":[]}];
+const DAYS = [{"id":"push","name":"Push","short":"Push","rest":false,"exercises":[{"id":"push-incline","name":"Incline DB press","sets":3,"reps":"8\u201312","muscles":["chest"]},{"id":"push-flat","name":"Flat machine or DB press","sets":3,"reps":"10\u201315","muscles":["chest"]},{"id":"push-fly","name":"High-to-low cable fly","sets":2,"reps":"12\u201320","muscles":["chest"]},{"id":"push-shoulder","name":"Seated DB shoulder press","sets":3,"reps":"8\u201312","muscles":["shoulders"]},{"id":"push-lat-db","name":"DB lateral raise","sets":3,"reps":"12\u201320","muscles":["shoulders"]},{"id":"push-lat-cable","name":"Cable lateral raise","sets":3,"reps":"15\u201325","muscles":["shoulders"]},{"id":"push-oh","name":"Overhead cable extension","sets":3,"reps":"10\u201315","muscles":["triceps"]},{"id":"push-down","name":"Rope pushdown","sets":3,"reps":"12\u201320","muscles":["triceps"]}],"weekday":1},{"id":"pull","name":"Pull","short":"Pull","rest":false,"exercises":[{"id":"pull-incline","name":"Incline DB curl","sets":3,"reps":"10\u201315","muscles":["biceps"]},{"id":"pull-ez","name":"EZ-bar curl","sets":3,"reps":"8\u201312","muscles":["biceps"]},{"id":"pull-hammer","name":"Hammer curl","sets":3,"reps":"10\u201315","muscles":["biceps"]},{"id":"pull-down","name":"Pull-up or wide pulldown","sets":3,"reps":"8\u201312","muscles":["back"]},{"id":"pull-row","name":"Chest-supported row","sets":3,"reps":"10\u201315","muscles":["back"]},{"id":"pull-straight","name":"Straight-arm pulldown","sets":2,"reps":"12\u201320","muscles":["back"]},{"id":"pull-rear","name":"Rear-delt fly","sets":3,"reps":"15\u201325","muscles":["rear-delts"]},{"id":"pull-face","name":"Face pull","sets":3,"reps":"15\u201325","muscles":["rear-delts"]}],"weekday":2},{"id":"legs","name":"Legs","short":"Legs","rest":false,"exercises":[{"id":"legs-hack","name":"Hack squat or high-bar squat","sets":4,"reps":"8\u201312","muscles":["quads"]},{"id":"legs-glute","name":"Glute drive or hip thrust","sets":3,"reps":"10\u201315","muscles":["glutes"],"cue":"Feet set so the glutes lock out, not the quads."},{"id":"legs-add","name":"Machine hip adduction","sets":3,"reps":"12\u201320","muscles":["adductors"]},{"id":"legs-ext","name":"Leg extension","sets":3,"reps":"12\u201320","muscles":["quads"],"cue":"Pause at the top."},{"id":"legs-curl","name":"Lying leg curl","sets":3,"reps":"10\u201315","muscles":["hamstrings"]},{"id":"legs-calf","name":"Standing calf raise","sets":4,"reps":"10\u201320","muscles":["calves"]},{"id":"legs-lat","name":"Lean-away or machine lateral","sets":3,"reps":"15\u201325","muscles":["shoulders"]}],"weekday":3},{"id":"rest-thu","name":"Rest","short":"Rest","rest":true,"exercises":[],"weekday":4},{"id":"quads","name":"Quads + chest","short":"Quads","rest":false,"exercises":[{"id":"quads-press","name":"Leg press","sets":4,"reps":"10\u201315","muscles":["quads"]},{"id":"quads-bulg","name":"Bulgarian split squat","sets":3,"reps":"10\u201315","muscles":["quads"],"cue":"Per leg. Last set at 2 reps in reserve."},{"id":"quads-single","name":"Single-leg extension","sets":2,"reps":"15\u201320","muscles":["quads"]},{"id":"quads-add","name":"Machine hip adduction","sets":3,"reps":"15\u201325","muscles":["adductors"]},{"id":"quads-pec","name":"Pec deck","sets":2,"reps":"12\u201320","muscles":["chest"]},{"id":"quads-fly","name":"Low-to-high cable fly","sets":2,"reps":"15\u201320","muscles":["chest"]},{"id":"quads-dip","name":"Chest-biased dip","sets":3,"reps":"10\u201315","muscles":["chest"]},{"id":"quads-kick","name":"Cable kickback","sets":3,"reps":"15\u201320","muscles":["triceps"]}],"weekday":5},{"id":"back","name":"Back + hamstrings","short":"Back","rest":false,"exercises":[{"id":"back-rdl","name":"Romanian deadlift","sets":4,"reps":"8\u201312","muscles":["hamstrings","glutes"],"cue":"Stop when the hamstrings give out, not the lower back."},{"id":"back-seated","name":"Seated leg curl","sets":4,"reps":"10\u201315","muscles":["hamstrings"]},{"id":"back-lying","name":"Lying leg curl","sets":3,"reps":"12\u201320","muscles":["hamstrings"]},{"id":"back-down","name":"Neutral-grip pulldown","sets":3,"reps":"10\u201315","muscles":["back"]},{"id":"back-row","name":"One-arm row","sets":3,"reps":"10\u201315","muscles":["back"]},{"id":"back-curl","name":"Bayesian or preacher curl","sets":3,"reps":"12\u201315","muscles":["biceps"]},{"id":"back-calf","name":"Seated calf raise","sets":4,"reps":"15\u201325","muscles":["calves"]}],"weekday":6},{"id":"rest-sun","name":"Rest","short":"Rest","rest":true,"exercises":[],"weekday":0}];
 const EX_NAMES = {"push-incline":"Incline DB press","push-flat":"Flat machine or DB press","push-fly":"High-to-low cable fly","push-shoulder":"Seated DB shoulder press","push-lat-db":"DB lateral raise","push-lat-cable":"Cable lateral raise","push-oh":"Overhead cable extension","push-down":"Rope pushdown","pull-incline":"Incline DB curl","pull-ez":"EZ-bar curl","pull-hammer":"Hammer curl","pull-down":"Pull-up or wide pulldown","pull-row":"Chest-supported row","pull-straight":"Straight-arm pulldown","pull-rear":"Rear-delt fly","pull-face":"Face pull","legs-hack":"Hack squat or high-bar squat","legs-glute":"Glute drive or hip thrust","legs-add":"Machine hip adduction","legs-ext":"Leg extension","legs-curl":"Lying leg curl","legs-calf":"Standing calf raise","legs-lat":"Lean-away or machine lateral","quads-press":"Leg press","quads-bulg":"Bulgarian split squat","quads-single":"Single-leg extension","quads-add":"Machine hip adduction","quads-pec":"Pec deck","quads-fly":"Low-to-high cable fly","quads-dip":"Chest-biased dip","quads-kick":"Cable kickback","back-rdl":"Romanian deadlift","back-seated":"Seated leg curl","back-lying":"Lying leg curl","back-down":"Neutral-grip pulldown","back-row":"One-arm row","back-curl":"Bayesian or preacher curl","back-calf":"Seated calf raise"};
 const DEFAULT_LIBRARY = {"push-incline":{"id":"push-incline","name":"Incline DB press","sets":3,"reps":"8–12","muscles":["chest"]},"push-flat":{"id":"push-flat","name":"Flat machine or DB press","sets":3,"reps":"10–15","muscles":["chest"]},"push-fly":{"id":"push-fly","name":"High-to-low cable fly","sets":2,"reps":"12–20","muscles":["chest"]},"push-shoulder":{"id":"push-shoulder","name":"Seated DB shoulder press","sets":3,"reps":"8–12","muscles":["shoulders"]},"push-lat-db":{"id":"push-lat-db","name":"DB lateral raise","sets":3,"reps":"12–20","muscles":["shoulders"]},"push-lat-cable":{"id":"push-lat-cable","name":"Cable lateral raise","sets":3,"reps":"15–25","muscles":["shoulders"]},"push-oh":{"id":"push-oh","name":"Overhead cable extension","sets":3,"reps":"10–15","muscles":["triceps"]},"push-down":{"id":"push-down","name":"Rope pushdown","sets":3,"reps":"12–20","muscles":["triceps"]},"pull-incline":{"id":"pull-incline","name":"Incline DB curl","sets":3,"reps":"10–15","muscles":["biceps"]},"pull-ez":{"id":"pull-ez","name":"EZ-bar curl","sets":3,"reps":"8–12","muscles":["biceps"]},"pull-hammer":{"id":"pull-hammer","name":"Hammer curl","sets":3,"reps":"10–15","muscles":["biceps"]},"pull-down":{"id":"pull-down","name":"Pull-up or wide pulldown","sets":3,"reps":"8–12","muscles":["back"]},"pull-row":{"id":"pull-row","name":"Chest-supported row","sets":3,"reps":"10–15","muscles":["back"]},"pull-straight":{"id":"pull-straight","name":"Straight-arm pulldown","sets":2,"reps":"12–20","muscles":["back"]},"pull-rear":{"id":"pull-rear","name":"Rear-delt fly","sets":3,"reps":"15–25","muscles":["rear-delts"]},"pull-face":{"id":"pull-face","name":"Face pull","sets":3,"reps":"15–25","muscles":["rear-delts"]},"legs-hack":{"id":"legs-hack","name":"Hack squat or high-bar squat","sets":4,"reps":"8–12","muscles":["quads"]},"legs-glute":{"id":"legs-glute","name":"Glute drive or hip thrust","sets":3,"reps":"10–15","muscles":["glutes"],"cue":"Feet set so the glutes lock out, not the quads."},"legs-add":{"id":"legs-add","name":"Machine hip adduction","sets":3,"reps":"12–20","muscles":["adductors"]},"legs-ext":{"id":"legs-ext","name":"Leg extension","sets":3,"reps":"12–20","muscles":["quads"],"cue":"Pause at the top."},"legs-curl":{"id":"legs-curl","name":"Lying leg curl","sets":3,"reps":"10–15","muscles":["hamstrings"]},"legs-calf":{"id":"legs-calf","name":"Standing calf raise","sets":4,"reps":"10–20","muscles":["calves"]},"legs-lat":{"id":"legs-lat","name":"Lean-away or machine lateral","sets":3,"reps":"15–25","muscles":["shoulders"]},"quads-press":{"id":"quads-press","name":"Leg press","sets":4,"reps":"10–15","muscles":["quads"]},"quads-bulg":{"id":"quads-bulg","name":"Bulgarian split squat","sets":3,"reps":"10–15","muscles":["quads"],"cue":"Per leg. Last set at 2 reps in reserve."},"quads-single":{"id":"quads-single","name":"Single-leg extension","sets":2,"reps":"15–20","muscles":["quads"]},"quads-add":{"id":"quads-add","name":"Machine hip adduction","sets":3,"reps":"15–25","muscles":["adductors"]},"quads-pec":{"id":"quads-pec","name":"Pec deck","sets":2,"reps":"12–20","muscles":["chest"]},"quads-fly":{"id":"quads-fly","name":"Low-to-high cable fly","sets":2,"reps":"15–20","muscles":["chest"]},"quads-dip":{"id":"quads-dip","name":"Chest-biased dip","sets":3,"reps":"10–15","muscles":["chest"]},"quads-kick":{"id":"quads-kick","name":"Cable kickback","sets":3,"reps":"15–20","muscles":["triceps"]},"back-rdl":{"id":"back-rdl","name":"Romanian deadlift","sets":4,"reps":"8–12","muscles":["hamstrings","glutes"],"cue":"Stop when the hamstrings give out, not the lower back."},"back-seated":{"id":"back-seated","name":"Seated leg curl","sets":4,"reps":"10–15","muscles":["hamstrings"]},"back-lying":{"id":"back-lying","name":"Lying leg curl","sets":3,"reps":"12–20","muscles":["hamstrings"]},"back-down":{"id":"back-down","name":"Neutral-grip pulldown","sets":3,"reps":"10–15","muscles":["back"]},"back-row":{"id":"back-row","name":"One-arm row","sets":3,"reps":"10–15","muscles":["back"]},"back-curl":{"id":"back-curl","name":"Bayesian or preacher curl","sets":3,"reps":"12–15","muscles":["biceps"]},"back-calf":{"id":"back-calf","name":"Seated calf raise","sets":4,"reps":"15–25","muscles":["calves"]}};
 const MUSCLES = [{"id":"chest","name":"Chest"},{"id":"shoulders","name":"Shoulders"},{"id":"rear-delts","name":"Rear delts"},{"id":"triceps","name":"Triceps"},{"id":"biceps","name":"Biceps"},{"id":"back","name":"Back"},{"id":"quads","name":"Quads"},{"id":"hamstrings","name":"Hamstrings"},{"id":"glutes","name":"Glutes"},{"id":"adductors","name":"Adductors"},{"id":"calves","name":"Calves"}];
@@ -299,10 +302,22 @@ function cleanDayName(val) {
   return String(val ?? "").trim().slice(0, 24);
 }
 
+function isRestDay(id, src) {
+  const restMap = (src && src.dayRest && typeof src.dayRest === "object") ? src.dayRest : {};
+  if (Object.prototype.hasOwnProperty.call(restMap, id)) return !!restMap[id];
+  const d = DAYS.find((x) => x.id === id);
+  return !!(d && d.rest);
+}
+
+function daysInWeekOrder() {
+  return [1, 2, 3, 4, 5, 6, 0].map((wd) => DAYS.find((d) => d.weekday === wd)).filter(Boolean);
+}
+
 function displayDayName(id, src) {
   const override = cleanDayName(dayNameMap(src)[id]);
   if (override) return override;
   const d = DAYS.find((x) => x.id === id);
+  if (d && d.rest && !isRestDay(id, src)) return "Training";
   return (d && d.name) || id;
 }
 
@@ -310,6 +325,7 @@ function displayDayShort(id, src) {
   const override = cleanDayName(dayNameMap(src)[id]);
   if (override) return override;
   const d = DAYS.find((x) => x.id === id);
+  if (d && d.rest && !isRestDay(id, src)) return "Training";
   return (d && d.short) || id;
 }
 
@@ -317,7 +333,7 @@ function dayName(id, src) {
   return displayDayName(id, src || (ui.view === "edit" ? ui.draft : ui.state));
 }
 
-function trainingDays() { return DAYS.filter((d) => !d.rest); }
+function trainingDays(src) { return DAYS.filter((d) => !isRestDay(d.id, src)); }
 
 function pad2(n) { return String(n).padStart(2, "0"); }
 
@@ -492,8 +508,8 @@ function liftSummaries(state) {
 function volumeByMuscle(state) {
   const plans = (state && state.plans) || {};
   const map = new Map(MUSCLES.map((m) => [m.id, 0]));
-  for (const day of trainingDays()) {
-    const list = plans[day.id] || day.exercises || [];
+  for (const day of trainingDays(state)) {
+    const list = Array.isArray(plans[day.id]) ? plans[day.id] : (day.exercises || []);
     for (const ex of list) {
       for (const m of ex.muscles || []) {
         if (map.has(m)) map.set(m, map.get(m) + (Number(ex.sets) || 0));
@@ -522,7 +538,7 @@ function defaultPlan(dayId) {
 
 function draftFrom(client, state) {
   const plans = {};
-  for (const d of trainingDays()) {
+  for (const d of DAYS) {
     const src = state && state.plans && Array.isArray(state.plans[d.id]) ? state.plans[d.id] : defaultPlan(d.id);
     plans[d.id] = src.map(cloneEx);
   }
@@ -672,7 +688,7 @@ function openEditor() {
   if (!ui.selected) return;
   ui.draft = draftFrom(ui.selected, ui.state);
   ui.draftSaved = JSON.parse(JSON.stringify(ui.draft));
-  ui.editDay = trainingDays()[0].id;
+  ui.editDay = (trainingDays(ui.state)[0] || daysInWeekOrder()[0]).id;
   ui.libQuery = "";
   ui.customOpen = false;
   ui.custom = { name: "", sets: 3, reps: "8–12", muscles: [], cue: "" };
@@ -1162,6 +1178,17 @@ function renderDetail() {
           </div>
         </section>
         <button type="button" class="btn-primary" data-act="edit-plan">Edit plan</button>
+        <section class="card">
+          <p class="kicker">Program week</p>
+          <div class="meta-list" style="margin:.35rem 0 0">
+            ${daysInWeekOrder().map((day) => {
+              const rest = isRestDay(day.id, state);
+              const list = state && state.plans && Array.isArray(state.plans[day.id]) ? state.plans[day.id] : (day.exercises || []);
+              const label = rest ? "Rest" : (displayDayName(day.id, state) + (list.length ? " · " + list.length + " exercise" + (list.length === 1 ? "" : "s") : " · no exercises"));
+              return `<p class="meta-line"><span class="lbl">${esc(DOW[day.weekday])}</span> ${esc(label)}</p>`;
+            }).join("")}
+          </div>
+        </section>
         ${ui.busy && !state ? `<p class="empty">Loading…</p>` : ""}
         ${!ui.busy && !state ? `<p class="empty">No data synced yet. You can still edit their plan, or wait until they open their link and log a session.</p>` : ""}
         ${state ? `
@@ -1196,11 +1223,13 @@ function renderDetail() {
 
 function renderEdit() {
   const d = ui.draft;
-  const day = DAYS.find((x) => x.id === ui.editDay) || trainingDays()[0];
+  const day = DAYS.find((x) => x.id === ui.editDay) || trainingDays(ui.state)[0] || daysInWeekOrder()[0];
+  const rest = isRestDay(day.id, ui.state);
   const plan = d.plans[day.id] || [];
-  const chips = trainingDays().map((x) =>
-    `<button type="button" class="chip${x.id === day.id ? " active" : ""}" data-act="edit-day" data-id="${esc(x.id)}"><span>${esc(displayDayShort(x.id, d))}</span></button>`
-  ).join("");
+  const chips = daysInWeekOrder().map((x) => {
+    const off = isRestDay(x.id, ui.state);
+    return `<button type="button" class="chip${x.id === day.id ? " active" : ""}${off ? " off" : ""}" data-act="edit-day" data-id="${esc(x.id)}"><span>${esc(displayDayShort(x.id, d))}</span><span class="meta">${off ? "Off" : "·"}</span></button>`;
+  }).join("");
   const rows = plan.map((ex, i) => {
     const removing = ui.confirm && ui.confirm.kind === "remove" && ui.confirm.id === ex.id;
     return `<section class="card ex-edit">
@@ -1277,18 +1306,20 @@ function renderEdit() {
           </div>
         </section>
         <div class="chips">${chips}</div>
+        ${rest ? `<section class="card"><h2 class="section-title" style="margin:0">${esc(displayDayName(day.id, d))}</h2>
+          <p class="lede" style="margin:.5rem 0 0">This is a rest day on their program. Training vs rest is set from their own link.</p></section>` : `
         <section class="card stack">
           <label>Session name
-            <input class="field" value="${esc(cleanDayName((d.dayNames || {})[day.id]))}" placeholder="${esc(day.name)}" maxlength="24" data-keep="day-name" data-id="${esc(day.id)}" ${ui.busy ? "disabled" : ""}>
+            <input class="field" value="${esc(cleanDayName((d.dayNames || {})[day.id]))}" placeholder="${esc(day.rest ? "Training" : day.name)}" maxlength="24" data-keep="day-name" data-id="${esc(day.id)}" ${ui.busy ? "disabled" : ""}>
           </label>
-          <p class="lede" style="margin:0">Leave blank to use the default name, ${esc(day.name)}.</p>
+          <p class="lede" style="margin:0">Leave blank to use the default name, ${esc(day.rest ? "Training" : day.name)}.</p>
         </section>
         <div>
           <h2 class="section-title">${esc(displayDayName(day.id, d))}</h2>
           <p class="lede">${plan.length} exercise${plan.length === 1 ? "" : "s"} this day.</p>
         </div>
         <div class="stack">${rows || `<p class="empty">No exercises on this day yet.</p>`}</div>
-        ${libBlock}
+        ${libBlock}`}
       </div>
       <div class="sticky-actions">
         <button type="button" class="btn-line" data-act="leave-edit" ${ui.busy ? "disabled" : ""}>Discard</button>

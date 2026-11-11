@@ -715,6 +715,37 @@ main {
 }
 .plan-toast[hidden] { display: none; }
 
+.text-btn {
+  min-height: 2.75rem; padding: 0 0.9rem; border-radius: 999px;
+  font-size: 0.875rem; color: var(--fg);
+}
+.text-btn:hover { background: var(--raised); }
+.prog-toggle { display: grid; grid-template-columns: 1fr 1fr; gap: 0.45rem; }
+.prog-toggle button { height: 2.5rem; font-size: 0.8125rem; letter-spacing: 0.08em; }
+.prog-dow { margin: 0; font-size: 11px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--muted); }
+.prog-card-head { width: 100%; display: flex; align-items: flex-start; justify-content: space-between; gap: 0.75rem; text-align: left; }
+.prog-card-head h3 { margin: 0.2rem 0 0; font-family: var(--font-display); font-size: 1.65rem; letter-spacing: -0.03em; line-height: 1.05; }
+.prog-card-head p { margin: 0.3rem 0 0; font-size: 0.8125rem; color: var(--muted); }
+.prog-card.open, main.program-main .card.open { box-shadow: var(--shadow), inset 0 0 0 1px color-mix(in srgb, var(--primary) 35%, var(--line)); }
+.name-input, .cue-input {
+  width: 100%; padding: 0.55rem 0.75rem;
+  border-radius: var(--radius-sm); background: var(--raised);
+  box-shadow: inset 0 0 0 1px var(--line); color: inherit; border: 0; font: inherit;
+}
+main.program-main { padding-bottom: calc(6.2rem + var(--safe-bottom)); }
+.sticky-done {
+  position: fixed;
+  left: 0; right: 0; bottom: 0;
+  z-index: 20;
+  max-width: 32rem;
+  margin: 0 auto;
+  padding: 0.85rem 1.25rem calc(0.85rem + var(--safe-bottom));
+  background: color-mix(in srgb, var(--bg) 90%, transparent);
+  backdrop-filter: blur(18px) saturate(1.2);
+  -webkit-backdrop-filter: blur(18px) saturate(1.2);
+  border-top: 1px solid var(--line);
+}
+
 </style>
 </head>
 <body>
@@ -851,17 +882,21 @@ function dayNameMap() {
   return (store && store.dayNames && typeof store.dayNames === "object" && !Array.isArray(store.dayNames)) ? store.dayNames : {};
 }
 
-function displayDayName(id) {
-  const override = cleanDayName(dayNameMap()[id]);
+function displayDayName(id, src) {
+  const names = src ? ((src.dayNames && typeof src.dayNames === "object") ? src.dayNames : {}) : dayNameMap();
+  const override = cleanDayName(names[id]);
   if (override) return override;
   const d = DAYS.find((x) => x.id === id);
+  if (d && d.rest && !isRestDay(id, src)) return "Training";
   return (d && d.name) || id;
 }
 
-function displayDayShort(id) {
-  const override = cleanDayName(dayNameMap()[id]);
+function displayDayShort(id, src) {
+  const names = src ? ((src.dayNames && typeof src.dayNames === "object") ? src.dayNames : {}) : dayNameMap();
+  const override = cleanDayName(names[id]);
   if (override) return override;
   const d = DAYS.find((x) => x.id === id);
+  if (d && d.rest && !isRestDay(id, src)) return "Training";
   return (d && d.short) || id;
 }
 
@@ -881,6 +916,36 @@ function setDayName(id, val) {
   if (!t) delete next[id];
   else next[id] = t;
   store.dayNames = next;
+}
+
+function normalizeDayRest(src) {
+  const out = {};
+  if (!src || typeof src !== "object" || Array.isArray(src)) return out;
+  for (const [k, v] of Object.entries(src)) {
+    if (v === true || v === false) out[k] = v;
+  }
+  return out;
+}
+
+function isRestDay(id, src) {
+  const restMap = src && src.dayRest ? src.dayRest : (store && store.dayRest) || {};
+  if (restMap && Object.prototype.hasOwnProperty.call(restMap, id)) return !!restMap[id];
+  const d = DAYS.find((x) => x.id === id);
+  return !!(d && d.rest);
+}
+
+function daysInWeekOrder() {
+  return [1, 2, 3, 4, 5, 6, 0].map((wd) => dayByWeekday(wd));
+}
+
+function setDayRest(id, rest) {
+  const next = { ...(store.dayRest || {}), [id]: !!rest };
+  store.dayRest = next;
+  if (!rest) {
+    const d = DAYS.find((x) => x.id === id);
+    if (d && d.rest && !cleanDayName((store.dayNames || {})[id])) setDayName(id, "Training");
+    if (!Array.isArray((store.plans || {})[id])) store.plans = { ...store.plans, [id]: [] };
+  }
 }
 
 function defaultMeals() {
@@ -1086,8 +1151,8 @@ function volumeRows(plans) {
   for (const m of MUSCLES) map.set(m.id, []);
   const unassigned = [];
   for (const day of DAYS) {
-    if (day.rest) continue;
-    const exercises = plans[day.id] ?? day.exercises;
+    if (isRestDay(day.id)) continue;
+    const exercises = planFor(day.id, plans);
     for (const ex of exercises) {
       const muscles = exerciseMuscles(ex);
       const src = { dayId: day.id, day: displayDayShort(day.id), exerciseId: ex.id, name: ex.name, sets: ex.sets };
@@ -1116,6 +1181,7 @@ function defaultStore() {
     meals: defaultMeals(),
     checkIns: {},
     dayNames: {},
+    dayRest: {},
     updatedAt: 0,
     coachEditAt: 0
   };
@@ -1130,6 +1196,7 @@ function isStoreEmpty(st) {
   if (st.plans && typeof st.plans === "object" && Object.keys(st.plans).length) return false;
   if (st.library && typeof st.library === "object" && Object.keys(st.library).length) return false;
   if (st.dayNames && typeof st.dayNames === "object" && Object.keys(st.dayNames).length) return false;
+  if (st.dayRest && typeof st.dayRest === "object" && Object.keys(st.dayRest).length) return false;
   if (st.weights && typeof st.weights === "object" && Object.keys(st.weights).length) return false;
   if (Array.isArray(st.customFoods) && st.customFoods.length) return false;
   if (st.checkIns && typeof st.checkIns === "object" && Object.keys(st.checkIns).length) return false;
@@ -1145,6 +1212,7 @@ function applyStateFields(target, st) {
   if (st.plans && typeof st.plans === "object") target.plans = st.plans;
   if (st.library && typeof st.library === "object") target.library = st.library;
   if (st.dayNames && typeof st.dayNames === "object") target.dayNames = normalizeDayNames(st.dayNames);
+  if (st.dayRest && typeof st.dayRest === "object") target.dayRest = normalizeDayRest(st.dayRest);
   if (st.weights && typeof st.weights === "object") target.weights = st.weights;
   if (Array.isArray(st.customFoods)) target.customFoods = st.customFoods;
   target.meals = normalizeMeals(st.meals);
@@ -1166,6 +1234,7 @@ function snapshotState() {
     meals: store.meals,
     checkIns: store.checkIns,
     dayNames: store.dayNames || {},
+    dayRest: store.dayRest || {},
     updatedAt: store.updatedAt || 0,
     coachEditAt: store.coachEditAt || 0
   };
@@ -1262,6 +1331,7 @@ function adoptRemote(remote) {
   store.meals = next.meals;
   store.checkIns = next.checkIns;
   store.dayNames = next.dayNames || {};
+  store.dayRest = next.dayRest || {};
   store.updatedAt = next.updatedAt || 0;
   store.coachEditAt = next.coachEditAt || 0;
   writeLocal(snapshotState());
@@ -1480,21 +1550,24 @@ let ui = {
   mealAmount: "",
   newFoodOpen: false,
   newFood: { name: "", kcal: "", protein: "", carbs: "", fat: "" },
-  volumeOpen: "quads"
+  volumeOpen: "quads",
+  program: false,
+  programDay: null,
+  programConfirm: null
 };
 let current = null;
 
 function ensureSession() {
   const day = dayById(ui.dayId);
   const exercises = planFor(ui.dayId, store.plans);
-  if (day.rest) {
+  if (isRestDay(day.id)) {
     current = null;
     return;
   }
   const id = sessionId(ui.dayId, ui.date);
   const existing = store.sessions.find((s) => s.id === id);
   if (existing) {
-    const sets = {};
+    const sets = { ...(existing.sets || {}) };
     for (const ex of exercises) sets[ex.id] = fitSets(existing.sets[ex.id], ex.sets);
     current = { ...existing, sets };
     return;
@@ -1512,7 +1585,7 @@ function addExercise() {
   plan.push(ex);
   store.plans = { ...store.plans, [ui.dayId]: plan };
   store.library = { ...store.library, [ex.id]: ex };
-  if (current) {
+  if (current && current.dayId === ui.dayId) {
     saveSession({ ...current, sets: { ...current.sets, [ex.id]: Array.from({ length: ex.sets }, () => emptySet()) } });
   }
   ui.addName = "";
@@ -1524,11 +1597,6 @@ function removeExercise(id) {
   const found = planFor(ui.dayId, store.plans).find((e) => e.id === id);
   store.plans = { ...store.plans, [ui.dayId]: plan };
   if (found) store.library = { ...store.library, [found.id]: found };
-  if (current) {
-    const sets = { ...current.sets };
-    delete sets[id];
-    saveSession({ ...current, sets });
-  }
   persist();
 }
 
@@ -1559,16 +1627,44 @@ function updateExercise(id, patch) {
     } else if (sets < ranges.length) ranges = ranges.slice(0, sets);
     const setReps = ranges.every((r) => r === reps) ? undefined : ranges;
     const muscles = patch.muscles ?? ex.muscles;
-    updated = { ...ex, sets, reps, setReps, muscles };
+    const name = patch.name == null ? ex.name : (String(patch.name).trim().slice(0, 80) || ex.name);
+    updated = { ...ex, name, sets, reps, setReps, muscles };
     return updated;
   });
   if (!updated) return;
   store.plans = { ...store.plans, [ui.dayId]: plan };
   store.library = { ...store.library, [updated.id]: updated };
-  if (current && patch.sets != null) {
+  if (current && current.dayId === ui.dayId && patch.sets != null) {
     saveSession({ ...current, sets: { ...current.sets, [id]: fitSets(current.sets[id], updated.sets) } });
   }
   persist();
+}
+
+function clearDay(dayId) {
+  store.plans = { ...store.plans, [dayId]: [] };
+  persist();
+}
+
+function openProgram() {
+  ui.program = true;
+  ui.settings = false;
+  ui.programConfirm = null;
+  ui.programDay = ui.dayId || daysInWeekOrder()[0].id;
+  ui.dayId = ui.programDay;
+  ui.addName = "";
+  ui.addSets = 3;
+  ui.addReps = "8–12";
+  ui.addMuscles = [];
+}
+
+function closeProgram() {
+  ui.program = false;
+  ui.programConfirm = null;
+  ui.addName = "";
+  ui.addSets = 3;
+  ui.addReps = "8–12";
+  ui.addMuscles = [];
+  ensureSession();
 }
 
 function copyLast() {
@@ -1631,14 +1727,16 @@ function macroCell(label, value) {
 }
 
 function renderHeader() {
-  const actions = clientToken
-    ? `<div class="header-actions"><span class="sync-dot" data-state="${esc(syncStatus)}" title="${esc(syncTitle())}" aria-label="${esc(syncTitle())}"></span><button type="button" class="icon-btn" aria-label="Settings" data-act="settings">${ICONS.settings}</button></div>`
-    : `<button type="button" class="icon-btn" aria-label="Settings" data-act="settings">${ICONS.settings}</button>`;
+  const actions = ui.program
+    ? `<button type="button" class="text-btn" data-act="close-program">Done</button>`
+    : (clientToken
+      ? `<div class="header-actions"><span class="sync-dot" data-state="${esc(syncStatus)}" title="${esc(syncTitle())}" aria-label="${esc(syncTitle())}"></span><button type="button" class="icon-btn" aria-label="Settings" data-act="settings">${ICONS.settings}</button></div>`
+      : `<button type="button" class="icon-btn" aria-label="Settings" data-act="settings">${ICONS.settings}</button>`);
   return `<header class="header">
     <div>
       <p class="brand-kicker">Block</p>
       <div class="brand-rule"></div>
-      <p class="brand-sub">Classic mass · ${esc(store.unit)}</p>
+      <p class="brand-sub">${ui.program ? "Edit program" : "Classic mass · " + esc(store.unit)}</p>
     </div>
     ${actions}
   </header>`;
@@ -1674,13 +1772,13 @@ function renderTrain() {
   const chips = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"].map((_, i) => {
     const d = dayByWeekday(i === 6 ? 0 : i + 1);
     const active = d.id === ui.dayId;
-    const meta = d.id === scheduledId && isToday ? "Today" : d.rest ? "Off" : "·";
+    const meta = d.id === scheduledId && isToday ? "Today" : isRestDay(d.id) ? "Off" : "·";
     return `<button type="button" class="chip${active ? " active" : ""}" data-act="chip" data-id="${esc(d.id)}"><span class="name">${esc(displayDayShort(d.id))}</span><span class="meta">${esc(meta)}</span></button>`;
   }).join("");
 
   let body = "";
-  if (day.rest) {
-    body = `<div class="rest-card"><h3>No session</h3><p>If you still train, pick a training day above.</p></div>`;
+  if (isRestDay(day.id)) {
+    body = `<div class="rest-card"><h3>No session</h3><p>This is a rest day. Edit your program to train today, or pick another day.</p></div>`;
   } else if (current) {
     const copy = prev
       ? `<button type="button" class="copy-last" data-act="copy-last">Copy last ${esc(displayDayShort(day.id).toLowerCase())}${prev.unit === current.unit ? "" : ` (${esc(prev.unit)})`}</button>`
@@ -1721,12 +1819,13 @@ function renderTrain() {
     <div>
       <div class="session-head">
         <h2 class="session-title">${esc(displayDayName(day.id))}</h2>
-        ${day.rest ? "" : `<p class="progress">${done}/${total}</p>`}
+        ${isRestDay(day.id) ? "" : `<p class="progress">${done}/${total}</p>`}
       </div>
-      <p class="note">${esc(day.note)}</p>
-      <label class="flabel" style="margin-top:.75rem">Session name
-        <input class="field mt-2" value="${esc(cleanDayName((store.dayNames || {})[day.id]))}" placeholder="${esc(day.name)}" maxlength="24" aria-label="Session name" data-keep="day-name">
-      </label>
+      ${!isRestDay(day.id) && day.note && !day.rest ? `<p class="note">${esc(day.note)}</p>` : ""}
+      ${isRestDay(day.id) ? "" : `<label class="flabel" style="margin-top:.75rem">Session name
+        <input class="field mt-2" value="${esc(cleanDayName((store.dayNames || {})[day.id]))}" placeholder="${esc(day.rest ? "Training" : day.name)}" maxlength="24" aria-label="Session name" data-keep="day-name">
+      </label>`}
+      <button type="button" class="btn-line mt-3" data-act="open-program">Edit program</button>
     </div>
     ${body}
   </div>`;
@@ -1806,11 +1905,11 @@ function renderLog() {
 
 function renderLifts() {
   if (ui.liftId) {
-    const items = DAYS.filter((d) => !d.rest).flatMap((d) => planFor(d.id, store.plans).map((ex) => ({ day: d, exercise: ex })));
+    const items = DAYS.filter((d) => !isRestDay(d.id)).flatMap((d) => planFor(d.id, store.plans).map((ex) => ({ day: d, exercise: ex })));
     const found = items.find((x) => x.exercise.id === ui.liftId);
     if (found) return renderLiftDetail(found.exercise, displayDayName(found.day.id), liftPoints(store.sessions, found.exercise.id));
   }
-  const items = DAYS.filter((d) => !d.rest).flatMap((d) => planFor(d.id, store.plans).map((ex) => ({ day: d, exercise: ex })));
+  const items = DAYS.filter((d) => !isRestDay(d.id)).flatMap((d) => planFor(d.id, store.plans).map((ex) => ({ day: d, exercise: ex })));
   const groups = {};
   for (const item of items) (groups[item.day.id] ??= []).push(item.exercise);
   const sections = Object.entries(groups).map(([dayId, exercises]) => {
@@ -1993,6 +2092,8 @@ function renderSettings() {
     <button type="button" class="sheet-dismiss" aria-label="Close settings" data-act="close-settings"></button>
     <div class="sheet">
       <h2>Settings</h2>
+      <button type="button" class="btn-primary mt-3" data-act="open-program">Edit program</button>
+      <p class="lede">Build your week, rename exercises and choose training or rest days.</p>
       <p class="hint">Units for new sessions</p>
       <div class="unit-grid">${["kg", "lb"].map((u) =>
         `<button type="button" class="${store.unit === u ? "btn-primary" : "btn-line"}" data-act="unit" data-unit="${u}">${u}</button>`
@@ -2007,6 +2108,103 @@ function renderSettings() {
   </div>`;
 }
 
+function renderProgram() {
+  const selected = ui.programDay || ui.dayId;
+  const cards = daysInWeekOrder().map((day) => {
+    const rest = isRestDay(day.id);
+    const open = day.id === selected;
+    const plan = rest ? [] : planFor(day.id, store.plans);
+    const name = displayDayName(day.id);
+    const confirmClear = ui.programConfirm && ui.programConfirm.kind === "clear" && ui.programConfirm.dayId === day.id;
+    const confirmRemove = ui.programConfirm && ui.programConfirm.kind === "remove" && ui.programConfirm.dayId === day.id ? ui.programConfirm.id : null;
+    let editor = "";
+    if (open) {
+      const toggle = `<div class="prog-toggle">
+        <button type="button" class="${rest ? "btn-line" : "btn-primary"}" data-act="prog-rest" data-id="${esc(day.id)}" data-rest="0">Training</button>
+        <button type="button" class="${rest ? "btn-primary" : "btn-line"}" data-act="prog-rest" data-id="${esc(day.id)}" data-rest="1">Rest</button>
+      </div>`;
+      const nameField = rest ? "" : `<label class="flabel">Session name
+        <input class="field mt-2" value="${esc(cleanDayName((store.dayNames || {})[day.id]))}" placeholder="${esc(day.rest ? "Training" : day.name)}" maxlength="24" aria-label="Session name" data-keep="day-name">
+      </label>`;
+      let exBlock = "";
+      if (rest) {
+        exBlock = `<p class="lede" style="margin:.75rem 0 0">Rest day. Switch to Training to add exercises.</p>`;
+      } else {
+        const rows = plan.map((ex, i) => {
+          const removing = confirmRemove === ex.id;
+          const muscles = MUSCLES.map((m) => {
+            const on = (ex.muscles || []).includes(m.id);
+            return `<button type="button" class="pill${on ? " on" : ""}" aria-pressed="${on}" data-act="prog-muscle" data-ex="${esc(ex.id)}" data-id="${esc(m.id)}">${esc(m.name)}</button>`;
+          }).join("");
+          return `<section class="card ex" id="exercise-${esc(ex.id)}">
+            <div class="ex-top">
+              <label class="flabel grow" style="flex:1;min-width:0">Exercise ${i + 1}
+                <input class="name-input mt-2" value="${esc(ex.name)}" data-keep="ex-name" data-ex="${esc(ex.id)}">
+              </label>
+              <div class="ex-actions">
+                <button type="button" class="icon-btn solid" aria-label="Move up" ${i === 0 ? "disabled" : ""} data-act="move" data-ex="${esc(ex.id)}" data-delta="-1">${ICONS.chevronUp}</button>
+                <button type="button" class="icon-btn solid" aria-label="Move down" ${i === plan.length - 1 ? "disabled" : ""} data-act="move" data-ex="${esc(ex.id)}" data-delta="1">${ICONS.chevronDown}</button>
+                <button type="button" class="icon-btn solid" aria-label="Remove" data-act="prog-remove" data-ex="${esc(ex.id)}">${ICONS.trash}</button>
+              </div>
+            </div>
+            ${removing ? `<div class="stack" style="margin-top:.75rem"><p class="banner">Remove ${esc(ex.name)} from this day? Logged sets stay in your history.</p>
+              <button type="button" class="btn-line" data-act="prog-remove-yes" data-ex="${esc(ex.id)}">Remove</button>
+              <button type="button" class="btn-line" data-act="prog-confirm-no">Cancel</button></div>` : ""}
+            <div class="set-ctrl">
+              <button type="button" class="icon-btn solid" aria-label="Fewer sets" ${ex.sets <= 1 ? "disabled" : ""} data-act="adj-sets" data-ex="${esc(ex.id)}" data-delta="-1">${ICONS.minus}</button>
+              <span class="set-count">${ex.sets} sets</span>
+              <button type="button" class="icon-btn solid" aria-label="More sets" ${ex.sets >= 12 ? "disabled" : ""} data-act="adj-sets" data-ex="${esc(ex.id)}" data-delta="1">${ICONS.plus}</button>
+              <input class="field center" value="${esc(ex.reps)}" aria-label="Rep range for ${esc(ex.name)}" data-keep="ex-reps" data-ex="${esc(ex.id)}">
+            </div>
+            <div class="muscle-row">${muscles}</div>
+          </section>`;
+        }).join("");
+        const addMuscles = MUSCLES.map((m) => {
+          const on = ui.addMuscles.includes(m.id);
+          return `<button type="button" class="pill${on ? " on" : ""}" aria-pressed="${on}" data-act="toggle-muscle" data-id="${esc(m.id)}">${esc(m.name)}</button>`;
+        }).join("");
+        exBlock = `<div class="stack-3" style="margin-top:1rem">${rows || `<p class="lede" style="margin:0">No exercises yet. Add one below.</p>`}</div>
+          <form class="card ex add-ex" data-act="add-ex">
+            <p>Add exercise</p>
+            <input class="field mt-2" value="${esc(ui.addName)}" placeholder="Exercise name" aria-label="Exercise name" data-keep="addName">
+            <div class="set-ctrl">
+              <button type="button" class="icon-btn solid" aria-label="Fewer sets" data-act="add-sets" data-delta="-1">${ICONS.minus}</button>
+              <span class="set-count">${ui.addSets} sets</span>
+              <button type="button" class="icon-btn solid" aria-label="More sets" data-act="add-sets" data-delta="1">${ICONS.plus}</button>
+              <input class="field center" value="${esc(ui.addReps)}" aria-label="Rep range" data-keep="addReps">
+            </div>
+            <div class="muscle-row">${addMuscles}</div>
+            <button type="submit" class="btn-primary mt-3" ${!ui.addName.trim() || ui.addMuscles.length === 0 ? "disabled" : ""}>Add to ${esc(displayDayShort(day.id))}</button>
+          </form>
+          ${confirmClear
+            ? `<div class="card stack"><p class="banner">Clear every exercise from ${esc(name)}? Your log is kept.</p>
+                <button type="button" class="btn-line" data-act="prog-clear-yes" data-id="${esc(day.id)}">Clear this day</button>
+                <button type="button" class="btn-line" data-act="prog-confirm-no">Cancel</button></div>`
+            : `<button type="button" class="btn-line mt-3" data-act="prog-clear" data-id="${esc(day.id)}">Clear this day</button>`}`;
+      }
+      editor = `<div style="margin-top:1rem">${toggle}${nameField ? `<div style="margin-top:.75rem">${nameField}</div>` : ""}${exBlock}</div>`;
+    }
+    return `<section class="card prog-card${open ? " open" : ""}">
+      <button type="button" class="prog-card-head" data-act="prog-day" data-id="${esc(day.id)}">
+        <div>
+          <p class="prog-dow">${esc(DOW[day.weekday])}</p>
+          <h3>${esc(name)}</h3>
+          <p>${rest ? "Rest day" : (plan.length + " exercise" + (plan.length === 1 ? "" : "s"))}</p>
+        </div>
+      </button>
+      ${editor}
+    </section>`;
+  }).join("");
+
+  return `<div class="stack">
+    <div>
+      <h2 class="page-title">Edit program</h2>
+      <p class="lede">Build your week from scratch, or change the plan you already have. Renames keep your history linked. Removing an exercise does not delete logged sets.</p>
+    </div>
+    <div class="stack-3">${cards}</div>
+  </div>`;
+}
+
 function render() {
   const root = document.getElementById("app");
   const focused = document.activeElement;
@@ -2014,15 +2212,21 @@ function render() {
   const selStart = focused && focused.selectionStart;
   const selEnd = focused && focused.selectionEnd;
 
-  let main = "";
-  if (ui.tab === "train") main = renderTrain();
-  else if (ui.tab === "log") main = renderLog();
-  else if (ui.tab === "lifts") main = renderLifts();
-  else if (ui.tab === "volume") main = renderVolume();
-  else if (ui.tab === "weight") main = renderCheckIn();
-  else if (ui.tab === "meals") main = renderMeals();
-
-  root.innerHTML = `<div class="app">${renderHeader()}<main>${main}</main>${renderTabs()}${renderSettings()}</div>`;
+  let html;
+  if (ui.program) {
+    html = `<div class="app">${renderHeader()}<main class="program-main">${renderProgram()}</main>
+      <div class="sticky-done"><button type="button" class="btn-primary" data-act="close-program">Done</button></div></div>`;
+  } else {
+    let main = "";
+    if (ui.tab === "train") main = renderTrain();
+    else if (ui.tab === "log") main = renderLog();
+    else if (ui.tab === "lifts") main = renderLifts();
+    else if (ui.tab === "volume") main = renderVolume();
+    else if (ui.tab === "weight") main = renderCheckIn();
+    else if (ui.tab === "meals") main = renderMeals();
+    html = `<div class="app">${renderHeader()}<main>${main}</main>${renderTabs()}${renderSettings()}</div>`;
+  }
+  root.innerHTML = html;
 
   if (keepId) {
     const el = findKeep(keepId);
@@ -2036,7 +2240,7 @@ function render() {
 }
 
 function keepFocusKey(el) {
-  return [el.dataset.keep, el.dataset.ex, el.dataset.i, el.dataset.meal, el.dataset.item].filter(Boolean).join("|");
+  return [el.dataset.keep, el.dataset.ex, el.dataset.i, el.dataset.meal, el.dataset.item, el.dataset.id].filter(Boolean).join("|");
 }
 
 function findKeep(key) {
@@ -2056,6 +2260,46 @@ function onClick(e) {
   const act = btn.dataset.act;
   if (act === "settings") ui.settings = true;
   else if (act === "close-settings") ui.settings = false;
+  else if (act === "open-program") { openProgram(); }
+  else if (act === "close-program") { closeProgram(); }
+  else if (act === "prog-day") {
+    ui.programDay = btn.dataset.id;
+    ui.dayId = btn.dataset.id;
+    ui.programConfirm = null;
+    ui.addName = "";
+    ui.addMuscles = [];
+  }
+  else if (act === "prog-rest") {
+    const id = btn.dataset.id;
+    const rest = btn.dataset.rest === "1";
+    ui.programDay = id;
+    ui.dayId = id;
+    ui.programConfirm = null;
+    setDayRest(id, rest);
+    persist();
+    if (current && current.dayId === id && rest) current = null;
+  }
+  else if (act === "prog-muscle") {
+    ui.dayId = ui.programDay || ui.dayId;
+    const ex = planFor(ui.dayId, store.plans).find((x) => x.id === btn.dataset.ex);
+    const currentMuscles = ex?.muscles ?? [];
+    const muscles = currentMuscles.includes(btn.dataset.id)
+      ? currentMuscles.filter((id) => id !== btn.dataset.id)
+      : [...currentMuscles, btn.dataset.id];
+    updateExercise(btn.dataset.ex, { muscles });
+  }
+  else if (act === "prog-remove") { ui.programConfirm = { kind: "remove", dayId: ui.programDay || ui.dayId, id: btn.dataset.ex }; }
+  else if (act === "prog-remove-yes") {
+    ui.dayId = ui.programDay || ui.dayId;
+    removeExercise(btn.dataset.ex);
+    ui.programConfirm = null;
+  }
+  else if (act === "prog-clear") { ui.programConfirm = { kind: "clear", dayId: btn.dataset.id }; }
+  else if (act === "prog-clear-yes") {
+    clearDay(btn.dataset.id);
+    ui.programConfirm = null;
+  }
+  else if (act === "prog-confirm-no") { ui.programConfirm = null; }
   else if (act === "unit") { store.unit = btn.dataset.unit; persist(); }
   else if (act === "start-today") { store.startDate = today(); persist(); }
   else if (act === "export") { exportCsv(); ui.settings = false; }
@@ -2137,6 +2381,7 @@ function onClick(e) {
     persist();
   }
   render();
+  if (act === "close-program") window.scrollTo(0, 0);
 }
 
 function onSubmit(e) {
@@ -2154,7 +2399,8 @@ function onInput(e) {
   const val = el.value;
   if (keep === "addName") ui.addName = val;
   else if (keep === "addReps") ui.addReps = val;
-  else if (keep === "day-name") { setDayName(ui.dayId, val); persist(); }
+  else if (keep === "day-name") { setDayName(ui.program ? (ui.programDay || ui.dayId) : ui.dayId, val); persist(); if (ui.program) render(); }
+  else if (keep === "ex-name") { updateExercise(el.dataset.ex, { name: val }); }
   else if (keep === "ex-reps") updateExercise(el.dataset.ex, { reps: val });
   else if (keep === "target") updateExercise(el.dataset.ex, { setIndex: Number(el.dataset.i), setRange: val });
   else if (keep === "weight") patchSet(el.dataset.ex, Number(el.dataset.i), { weight: val });
@@ -2202,8 +2448,14 @@ function onInput(e) {
 function onBlur(e) {
   const el = e.target;
   if (el.dataset.keep === "day-name") {
-    setDayName(ui.dayId, el.value);
+    setDayName(ui.program ? (ui.programDay || ui.dayId) : ui.dayId, el.value);
     persist();
+    render();
+    return;
+  }
+  if (el.dataset.keep === "ex-name") {
+    const t = el.value.trim().slice(0, 80);
+    if (t) updateExercise(el.dataset.ex, { name: t });
     render();
     return;
   }
