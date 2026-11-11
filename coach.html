@@ -197,6 +197,26 @@ label .field, label .pass { margin-top: 0.4rem; }
 
 .mt-2 { margin-top: 0.5rem; }
 main.has-sticky { padding-bottom: calc(6.5rem + var(--safe-bottom)); }
+
+input[type="date"] { color-scheme: dark; }
+textarea.notes {
+  width: 100%; min-height: 5.5rem; padding: 0.75rem 1rem; margin-top: 0.4rem;
+  border-radius: var(--radius-sm); background: var(--raised);
+  box-shadow: inset 0 0 0 1px var(--line);
+  resize: vertical; font: inherit; color: inherit; border: 0; line-height: 1.5;
+}
+.field-date { border-radius: var(--radius-sm); }
+.meta-list { margin: 0.65rem 0 0; display: flex; flex-direction: column; gap: 0.28rem; }
+.meta-line { margin: 0; font-size: 0.8125rem; color: var(--muted); line-height: 1.45; }
+.meta-line .lbl { letter-spacing: 0.04em; text-transform: uppercase; font-size: 0.68rem; margin-right: 0.4rem; }
+.due-amber { color: #e8c36a; }
+.due-red { color: #ef6b5a; }
+.card-actions { display: flex; flex-wrap: wrap; gap: 0.45rem; margin-top: 0.85rem; }
+.sort-toggle { display: grid; grid-template-columns: 1fr 1fr; gap: 0.45rem; }
+.sort-toggle button { height: 2.35rem; font-size: 0.8125rem; }
+.plus-month { flex: 0 0 auto; height: 2.35rem; padding: 0 0.85rem; border-radius: 999px; font-size: 0.75rem; letter-spacing: 0.04em; text-transform: uppercase; box-shadow: inset 0 0 0 1px var(--line); color: var(--fg); }
+.date-row { display: flex; align-items: flex-end; gap: 0.5rem; }
+.date-row label { flex: 1; min-width: 0; }
 </style>
 </head>
 <body>
@@ -270,9 +290,107 @@ function isNotAllowed(err) { return !!(err && (err.notAllowed || /not allowed/i.
 
 function clientLink(token) { return TRACKER_ORIGIN + "?c=" + encodeURIComponent(token); }
 
-function dayName(id) { return (DAYS.find((d) => d.id === id) || {}).name || id; }
+function dayNameMap(src) {
+  if (src && src.dayNames && typeof src.dayNames === "object" && !Array.isArray(src.dayNames)) return src.dayNames;
+  return {};
+}
+
+function cleanDayName(val) {
+  return String(val ?? "").trim().slice(0, 24);
+}
+
+function displayDayName(id, src) {
+  const override = cleanDayName(dayNameMap(src)[id]);
+  if (override) return override;
+  const d = DAYS.find((x) => x.id === id);
+  return (d && d.name) || id;
+}
+
+function displayDayShort(id, src) {
+  const override = cleanDayName(dayNameMap(src)[id]);
+  if (override) return override;
+  const d = DAYS.find((x) => x.id === id);
+  return (d && d.short) || id;
+}
+
+function dayName(id, src) {
+  return displayDayName(id, src || (ui.view === "edit" ? ui.draft : ui.state));
+}
 
 function trainingDays() { return DAYS.filter((d) => !d.rest); }
+
+function pad2(n) { return String(n).padStart(2, "0"); }
+
+function todayISO() {
+  const d = new Date();
+  return d.getFullYear() + "-" + pad2(d.getMonth() + 1) + "-" + pad2(d.getDate());
+}
+
+function isoDate(v) {
+  if (v == null || v === "") return "";
+  const m = String(v).match(/^(\d{4}-\d{2}-\d{2})/);
+  return m ? m[1] : "";
+}
+
+function parseISODate(s) {
+  const v = isoDate(s);
+  if (!v) return null;
+  const [y, m, d] = v.split("-").map(Number);
+  return new Date(y, m - 1, d);
+}
+
+function fmtISODate(d) {
+  return d.getFullYear() + "-" + pad2(d.getMonth() + 1) + "-" + pad2(d.getDate());
+}
+
+function diffDays(a, b) {
+  const da = parseISODate(a), db = parseISODate(b);
+  if (!da || !db) return null;
+  da.setHours(0, 0, 0, 0);
+  db.setHours(0, 0, 0, 0);
+  return Math.round((da - db) / 86400000);
+}
+
+function addMonths(iso, n) {
+  const d = parseISODate(iso);
+  if (!d) return iso;
+  const day = d.getDate();
+  d.setDate(1);
+  d.setMonth(d.getMonth() + n);
+  const last = new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate();
+  d.setDate(Math.min(day, last));
+  return fmtISODate(d);
+}
+
+function weeksInfo(start) {
+  const days = diffDays(todayISO(), start);
+  if (days == null) return null;
+  if (days < 0) return { weeks: 0, week: 0, future: true, days };
+  const weeks = Math.floor(days / 7);
+  return { weeks, week: weeks + 1, future: false, days };
+}
+
+function weeksLabel(start) {
+  const info = weeksInfo(start);
+  if (!info) return "Not set";
+  if (info.future) return "Starts " + fmtEEE(start);
+  const weeksWord = info.weeks === 1 ? "1 week" : info.weeks + " weeks";
+  return "Week " + info.week + " · " + weeksWord;
+}
+
+function paymentStatus(date) {
+  const iso = isoDate(date);
+  if (!iso) return { iso: "", label: "Not set", tone: "" };
+  const days = diffDays(iso, todayISO());
+  if (days == null) return { iso, label: fmtEEE(iso), tone: "" };
+  if (days === 0) return { iso, label: "Due today", tone: "amber" };
+  if (days < 0) {
+    const n = -days;
+    return { iso, label: "Overdue by " + n + " day" + (n === 1 ? "" : "s"), tone: "red" };
+  }
+  const label = "Due in " + days + " day" + (days === 1 ? "" : "s");
+  return { iso, label, tone: days <= 3 ? "amber" : "" };
+}
 
 function exerciseName(id, state) {
   const plans = state && state.plans ? state.plans : {};
@@ -412,18 +530,34 @@ function draftFrom(client, state) {
   for (const list of Object.values(plans)) {
     for (const ex of list) library[ex.id] = { ...(library[ex.id] || {}), ...ex };
   }
+  const dayNames = {};
+  const srcNames = state && state.dayNames && typeof state.dayNames === "object" ? state.dayNames : {};
+  for (const d of DAYS) {
+    const t = cleanDayName(srcNames[d.id]);
+    if (t) dayNames[d.id] = t;
+  }
   return {
     name: client && client.name ? client.name : "",
     unit: state && state.unit === "lb" ? "lb" : "kg",
     plans,
     library,
+    dayNames,
     origName: client && client.name ? client.name : ""
   };
 }
 
 function draftsEqual(a, b) {
-  return JSON.stringify({ name: a.name, unit: a.unit, plans: a.plans, library: a.library }) ===
-    JSON.stringify({ name: b.name, unit: b.unit, plans: b.plans, library: b.library });
+  return JSON.stringify({ name: a.name, unit: a.unit, plans: a.plans, library: a.library, dayNames: a.dayNames }) ===
+    JSON.stringify({ name: b.name, unit: b.unit, plans: b.plans, library: b.library, dayNames: b.dayNames });
+}
+
+function setDraftDayName(id, val) {
+  if (!ui.draft) return;
+  const next = { ...(ui.draft.dayNames || {}) };
+  const t = cleanDayName(val);
+  if (!t) delete next[id];
+  else next[id] = t;
+  ui.draft.dayNames = next;
 }
 
 let ui = {
@@ -445,7 +579,10 @@ let ui = {
   libQuery: "",
   customOpen: false,
   custom: { name: "", sets: 3, reps: "8–12", muscles: [], cue: "" },
-  confirm: null
+  confirm: null,
+  sort: "name",
+  detailsFrom: "list",
+  details: null
 };
 
 function isDirty() {
@@ -465,7 +602,7 @@ function showError(err, fallback) {
     return;
   }
   if (err && err.missing) {
-    ui.error = "Plan saving isn’t available yet. The database update still needs to be applied.";
+    ui.error = "This update isn’t available yet. The database update still needs to be applied.";
     return;
   }
   ui.error = (err && err.message) || fallback || "Something went wrong. Try again.";
@@ -510,6 +647,7 @@ async function addClient(name) {
 }
 
 async function openClient(client) {
+  const token = client && client.id;
   ui.busy = true;
   ui.error = "";
   ui.confirmDelete = false;
@@ -519,12 +657,14 @@ async function openClient(client) {
   render();
   try {
     const raw = await rpc("coach_get", { p_pass: ui.pass, p_client: client.id });
-    ui.state = raw && typeof raw === "object" ? raw : null;
+    if (ui.selected && ui.selected.id === token) {
+      ui.state = raw && typeof raw === "object" ? raw : null;
+    }
   } catch (err) {
     showError(err, "Could not load this client.");
   } finally {
     ui.busy = false;
-    render();
+    if (ui.view === "detail" && ui.selected && ui.selected.id === token) render();
   }
 }
 
@@ -561,8 +701,10 @@ async function savePlan() {
       p_client: ui.selected.id,
       p_plans: ui.draft.plans,
       p_library: ui.draft.library,
-      p_unit: ui.draft.unit
+      p_unit: ui.draft.unit,
+      p_day_names: ui.draft.dayNames || {}
     });
+    if (ui.state) ui.state = { ...ui.state, plans: ui.draft.plans, library: ui.draft.library, dayNames: ui.draft.dayNames || {}, unit: ui.draft.unit };
     ui.draftSaved = JSON.parse(JSON.stringify(ui.draft));
     await openClient(ui.selected);
   } catch (err) {
@@ -628,6 +770,115 @@ async function copyLink(token, id) {
   if (!ok) ui.justAdded = { name: "Link", token, link };
   render();
   setTimeout(() => { if (ui.copied === id) { ui.copied = ""; render(); } }, 1600);
+}
+
+function detailsFrom(client) {
+  return {
+    id: client.id,
+    token: client.token,
+    name: client.name || "",
+    height: client.height || "",
+    start_date: isoDate(client.start_date),
+    payment_date: isoDate(client.payment_date),
+    notes: client.notes || ""
+  };
+}
+
+function openDetails(client, from) {
+  if (!client) return;
+  ui.details = detailsFrom(client);
+  ui.detailsFrom = from || "list";
+  ui.error = "";
+  ui.view = "details";
+  render();
+}
+
+function leaveDetails() {
+  const back = ui.detailsFrom;
+  ui.details = null;
+  ui.error = "";
+  if (back === "detail" && ui.selected) ui.view = "detail";
+  else ui.view = "list";
+  render();
+}
+
+async function saveDetails(patch, opts) {
+  const src = patch || ui.details;
+  if (!src || !src.id) return false;
+  const name = String(src.name || "").trim();
+  if (!name) {
+    ui.error = "Enter a name for this client.";
+    render();
+    return false;
+  }
+  ui.busy = true;
+  ui.error = "";
+  render();
+  try {
+    await rpc("coach_set_details", {
+      p_pass: ui.pass,
+      p_client: src.id,
+      p_name: name,
+      p_height: String(src.height || "").trim() || null,
+      p_start_date: isoDate(src.start_date) || null,
+      p_payment_date: isoDate(src.payment_date) || null,
+      p_notes: String(src.notes || "").trim() || null
+    });
+    const apply = (c) => c && c.id === src.id ? {
+      ...c,
+      name,
+      height: String(src.height || "").trim() || null,
+      start_date: isoDate(src.start_date) || null,
+      payment_date: isoDate(src.payment_date) || null,
+      notes: String(src.notes || "").trim() || null
+    } : c;
+    ui.clients = ui.clients.map(apply);
+    if (ui.selected && ui.selected.id === src.id) ui.selected = apply(ui.selected);
+    if (ui.details && ui.details.id === src.id) ui.details = detailsFrom(ui.selected || src);
+    if (!(opts && opts.stay)) {
+      ui.details = null;
+      ui.view = (ui.detailsFrom === "detail" && ui.selected) ? "detail" : "list";
+    }
+    return true;
+  } catch (err) {
+    showError(err, "Could not save those details.");
+    return false;
+  } finally {
+    ui.busy = false;
+    render();
+  }
+}
+
+async function bumpPayment(client, ev) {
+  if (ev) ev.stopPropagation();
+  if (!client) return;
+  const base = isoDate(client.payment_date) || todayISO();
+  const next = addMonths(base, 1);
+  await saveDetails({
+    id: client.id,
+    name: client.name,
+    height: client.height || "",
+    start_date: isoDate(client.start_date),
+    payment_date: next,
+    notes: client.notes || ""
+  }, { stay: true });
+}
+
+function sortedClients() {
+  const rows = ui.clients.slice();
+  if (ui.sort === "payment") {
+    rows.sort((a, b) => {
+      const da = isoDate(a.payment_date), db = isoDate(b.payment_date);
+      if (!da && !db) return (a.name || "").localeCompare(b.name || "", undefined, { sensitivity: "base" });
+      if (!da) return 1;
+      if (!db) return -1;
+      if (da === db) return (a.name || "").localeCompare(b.name || "", undefined, { sensitivity: "base" });
+      return da < db ? -1 : 1;
+    });
+  } else {
+    rows.sort((a, b) => (a.name || "").localeCompare(b.name || "", undefined, { sensitivity: "base" }));
+  }
+  return rows;
 }
 
 function currentPlan() {
@@ -717,7 +968,7 @@ function renderHeader(sub, backAct) {
       <p class="brand-sub">${esc(sub)}${ui.view === "edit" && isDirty() ? `<span class="dirty-dot" title="Unsaved changes"></span>` : ""}</p>
     </div>
     ${backAct
-      ? `<button type="button" class="text-btn" data-act="${esc(backAct)}">${backAct === "leave-edit" ? "Back" : "Clients"}</button>`
+      ? `<button type="button" class="text-btn" data-act="${esc(backAct)}">${backAct === "leave-edit" || backAct === "leave-details" ? "Back" : "Home"}</button>`
       : (ui.view !== "gate" ? `<button type="button" class="text-btn signout" data-act="lock">Lock</button>` : "")}
   </header>`;
 }
@@ -742,9 +993,14 @@ function renderGate() {
 }
 
 function renderList() {
-  const rows = ui.clients.map((c) => {
+  const rows = sortedClients().map((c) => {
     const when = c.updated_at ? fmtWhen(c.updated_at) : "No data yet";
     const copied = ui.copied === c.id;
+    const height = (c.height && String(c.height).trim()) || "Not set";
+    const weeks = weeksLabel(c.start_date);
+    const pay = paymentStatus(c.payment_date);
+    const payClass = pay.tone === "red" ? " due-red" : pay.tone === "amber" ? " due-amber" : "";
+    const payText = pay.iso ? (fmtEEE(pay.iso) + " · " + pay.label) : "Not set";
     return `<section class="card">
       <div class="row">
         <button type="button" class="row-main" data-act="open" data-id="${esc(c.id)}">
@@ -753,18 +1009,27 @@ function renderList() {
         </button>
         <button type="button" class="mini${copied ? " copied" : ""}" data-act="copy" data-token="${esc(c.token)}" data-id="${esc(c.id)}">${copied ? "Copied" : "Copy link"}</button>
       </div>
+      <div class="meta-list">
+        <p class="meta-line"><span class="lbl">Height</span> ${esc(height)}</p>
+        <p class="meta-line"><span class="lbl">Weeks coached</span> ${esc(weeks)}</p>
+        <p class="meta-line${payClass}"><span class="lbl">Payment</span> ${esc(payText)}</p>
+      </div>
+      <div class="card-actions">
+        <button type="button" class="mini" data-act="edit-details" data-id="${esc(c.id)}">Edit details</button>
+        <button type="button" class="plus-month" data-act="plus-month" data-id="${esc(c.id)}">+1 month</button>
+      </div>
     </section>`;
   }).join("");
 
   const added = ui.justAdded ? `<p class="ok">Link for ${esc(ui.justAdded.name)} is ready${ui.copied === "new" ? " and copied" : ""}.
     <span class="link-box">${esc(ui.justAdded.link)}</span></p>` : "";
 
-  return `${renderHeader("Coach")}
+  return `${renderHeader("Home")}
     <main>
       <div class="stack-lg">
         <div>
-          <h1 class="page-title">Clients</h1>
-          <p class="lede">Send each person their private link. Open a client to view their log or edit their plan.</p>
+          <h1 class="page-title">Home</h1>
+          <p class="lede">Name, height, weeks coached and payment date for each client. Open a card to view their log, or edit their details and plan.</p>
         </div>
         ${ui.error ? `<p class="err" role="alert">${esc(ui.error)}</p>` : ""}
         ${added}
@@ -774,6 +1039,10 @@ function renderList() {
           </label>
           <button class="btn-primary" type="submit" ${ui.busy || !ui.newName.trim() ? "disabled" : ""}>Create link</button>
         </form>
+        ${ui.clients.length ? `<div class="sort-toggle">
+          <button type="button" class="${ui.sort === "name" ? "btn-primary" : "btn-line"}" data-act="sort" data-sort="name">Name</button>
+          <button type="button" class="${ui.sort === "payment" ? "btn-primary" : "btn-line"}" data-act="sort" data-sort="payment">Payment due</button>
+        </div>` : ""}
         <div class="stack">
           ${rows || `<p class="empty">No clients yet. Add a name to create a private link.</p>`}
         </div>
@@ -813,7 +1082,7 @@ function renderSessions(state) {
     return `<section class="card">
       <div class="row">
         <div class="row-main">
-          <h3>${esc(dayName(s.dayId))}</h3>
+          <h3>${esc(dayName(s.dayId, state))}</h3>
           <p>${esc(fmtEEE(s.date))}${s.finished ? " · Finished" : ""}</p>
         </div>
         <div>
@@ -881,6 +1150,17 @@ function renderDetail() {
           <p class="lede">Last synced ${esc(last)}. ${esc(sessions.length)} logged session${sessions.length === 1 ? "" : "s"}.</p>
         </div>
         ${ui.error ? `<p class="err" role="alert">${esc(ui.error)}</p>` : ""}
+        <section class="card">
+          <div class="meta-list" style="margin:0">
+            <p class="meta-line"><span class="lbl">Height</span> ${esc((c.height && String(c.height).trim()) || "Not set")}</p>
+            <p class="meta-line"><span class="lbl">Weeks coached</span> ${esc(weeksLabel(c.start_date))}</p>
+            <p class="meta-line${paymentStatus(c.payment_date).tone === "red" ? " due-red" : paymentStatus(c.payment_date).tone === "amber" ? " due-amber" : ""}"><span class="lbl">Payment</span> ${esc(paymentStatus(c.payment_date).iso ? (fmtEEE(paymentStatus(c.payment_date).iso) + " · " + paymentStatus(c.payment_date).label) : "Not set")}</p>
+          </div>
+          <div class="card-actions">
+            <button type="button" class="mini" data-act="edit-details" data-id="${esc(c.id)}">Edit details</button>
+            <button type="button" class="plus-month" data-act="plus-month" data-id="${esc(c.id)}">+1 month</button>
+          </div>
+        </section>
         <button type="button" class="btn-primary" data-act="edit-plan">Edit plan</button>
         ${ui.busy && !state ? `<p class="empty">Loading…</p>` : ""}
         ${!ui.busy && !state ? `<p class="empty">No data synced yet. You can still edit their plan, or wait until they open their link and log a session.</p>` : ""}
@@ -919,7 +1199,7 @@ function renderEdit() {
   const day = DAYS.find((x) => x.id === ui.editDay) || trainingDays()[0];
   const plan = d.plans[day.id] || [];
   const chips = trainingDays().map((x) =>
-    `<button type="button" class="chip${x.id === day.id ? " active" : ""}" data-act="edit-day" data-id="${esc(x.id)}"><span>${esc(x.short)}</span></button>`
+    `<button type="button" class="chip${x.id === day.id ? " active" : ""}" data-act="edit-day" data-id="${esc(x.id)}"><span>${esc(displayDayShort(x.id, d))}</span></button>`
   ).join("");
   const rows = plan.map((ex, i) => {
     const removing = ui.confirm && ui.confirm.kind === "remove" && ui.confirm.id === ex.id;
@@ -934,7 +1214,7 @@ function renderEdit() {
         <button type="button" class="icon-btn" aria-label="Move down" data-act="ex-down" data-id="${esc(ex.id)}" ${i === plan.length - 1 || ui.busy ? "disabled" : ""}>${ICONS.down}</button>
         <button type="button" class="icon-btn" aria-label="Remove" data-act="ex-remove" data-id="${esc(ex.id)}" ${ui.busy ? "disabled" : ""}>${ICONS.trash}</button>
       </div>
-      ${removing ? `<div class="stack"><p class="err">Remove ${esc(ex.name)} from ${esc(day.name)}?</p>
+      ${removing ? `<div class="stack"><p class="err">Remove ${esc(ex.name)} from ${esc(displayDayName(day.id, d))}?</p>
         <button type="button" class="btn-danger" data-act="ex-remove-yes" data-id="${esc(ex.id)}">Remove</button>
         <button type="button" class="btn-line" data-act="confirm-no">Cancel</button></div>` : ""}
       <div class="set-ctrl">
@@ -969,7 +1249,7 @@ function renderEdit() {
         `<button type="button" class="pill${ui.custom.muscles.includes(m.id) ? " on" : ""}" data-act="cu-muscle" data-id="${esc(m.id)}">${esc(m.name)}</button>`
       ).join("")}</div>
       <input class="cue-input" placeholder="Optional cue" value="${esc(ui.custom.cue)}" data-keep="cu-cue">
-      <button type="button" class="btn-primary" data-act="add-custom" ${!ui.custom.name.trim() || !ui.custom.muscles.length || ui.busy ? "disabled" : ""}>Add to ${esc(day.short)}</button>
+      <button type="button" class="btn-primary" data-act="add-custom" ${!ui.custom.name.trim() || !ui.custom.muscles.length || ui.busy ? "disabled" : ""}>Add to ${esc(displayDayShort(day.id, d))}</button>
     </div>` : ""}
   </section>`;
 
@@ -997,8 +1277,14 @@ function renderEdit() {
           </div>
         </section>
         <div class="chips">${chips}</div>
+        <section class="card stack">
+          <label>Session name
+            <input class="field" value="${esc(cleanDayName((d.dayNames || {})[day.id]))}" placeholder="${esc(day.name)}" maxlength="24" data-keep="day-name" data-id="${esc(day.id)}" ${ui.busy ? "disabled" : ""}>
+          </label>
+          <p class="lede" style="margin:0">Leave blank to use the default name, ${esc(day.name)}.</p>
+        </section>
         <div>
-          <h2 class="section-title">${esc(day.name)}</h2>
+          <h2 class="section-title">${esc(displayDayName(day.id, d))}</h2>
           <p class="lede">${plan.length} exercise${plan.length === 1 ? "" : "s"} this day.</p>
         </div>
         <div class="stack">${rows || `<p class="empty">No exercises on this day yet.</p>`}</div>
@@ -1007,6 +1293,49 @@ function renderEdit() {
       <div class="sticky-actions">
         <button type="button" class="btn-line" data-act="leave-edit" ${ui.busy ? "disabled" : ""}>Discard</button>
         <button type="button" class="btn-primary" data-act="save-plan" ${ui.busy || !isDirty() ? "disabled" : ""}>${ui.busy ? "Saving…" : "Save"}</button>
+      </div>
+    </main>`;
+}
+
+function renderDetails() {
+  const d = ui.details || { name: "", height: "", start_date: "", payment_date: "", notes: "" };
+  const weeks = weeksLabel(d.start_date);
+  const pay = paymentStatus(d.payment_date);
+  const payClass = pay.tone === "red" ? " due-red" : pay.tone === "amber" ? " due-amber" : "";
+  return `${renderHeader("Details", "leave-details")}
+    <main>
+      <div class="stack-lg">
+        <div>
+          <h1 class="page-title">Edit details</h1>
+          <p class="lede">These stay on your coach home page. Weeks coached counts up from the start date you set.</p>
+        </div>
+        ${ui.error ? `<p class="err" role="alert">${esc(ui.error)}</p>` : ""}
+        <form data-act="save-details" class="stack">
+          <label>Name
+            <input class="field" value="${esc(d.name)}" maxlength="80" data-keep="det-name" ${ui.busy ? "disabled" : ""}>
+          </label>
+          <label>Height
+            <input class="field" value="${esc(d.height)}" placeholder="180 cm or 5′11″" maxlength="40" data-keep="det-height" ${ui.busy ? "disabled" : ""}>
+          </label>
+          <label>Coaching start date (weeks coached counts up from this)
+            <input class="field field-date" type="date" value="${esc(d.start_date)}" data-keep="det-start" ${ui.busy ? "disabled" : ""}>
+          </label>
+          <p class="meta-line">Weeks coached: ${esc(weeks)}</p>
+          <div class="date-row">
+            <label>Payment date
+              <input class="field field-date" type="date" value="${esc(d.payment_date)}" data-keep="det-pay" ${ui.busy ? "disabled" : ""}>
+            </label>
+            <button type="button" class="plus-month" data-act="det-plus-month" ${ui.busy ? "disabled" : ""}>+1 month</button>
+          </div>
+          <p class="meta-line${payClass}">${esc(pay.iso ? pay.label : "No payment date set")}</p>
+          <label>Notes
+            <textarea class="notes" maxlength="1000" data-keep="det-notes" ${ui.busy ? "disabled" : ""}>${esc(d.notes)}</textarea>
+          </label>
+          <div class="sticky-actions" style="margin-left:-1.25rem;margin-right:-1.25rem">
+            <button type="button" class="btn-line" data-act="leave-details" ${ui.busy ? "disabled" : ""}>Cancel</button>
+            <button type="submit" class="btn-primary" ${ui.busy ? "disabled" : ""}>${ui.busy ? "Saving…" : "Save"}</button>
+          </div>
+        </form>
       </div>
     </main>`;
 }
@@ -1022,6 +1351,7 @@ function render() {
   if (ui.view === "gate") html = renderGate();
   else if (ui.view === "detail") html = renderDetail();
   else if (ui.view === "edit") html = renderEdit();
+  else if (ui.view === "details") html = renderDetails();
   else html = renderList();
   root.innerHTML = `<div class="app">${html}</div>`;
   if (keep) {
@@ -1040,13 +1370,30 @@ function onClick(e) {
   if (!btn) return;
   if (btn.tagName === "BUTTON" && btn.closest("form") && btn.type !== "submit") e.preventDefault();
   const act = btn.dataset.act;
-  if (act === "back") { ui.view = "list"; ui.selected = null; ui.state = null; ui.confirmDelete = false; ui.error = ""; render(); }
-  else if (act === "lock") { ui.pass = ""; ui.passInput = ""; setPass(""); ui.view = "gate"; ui.clients = []; ui.selected = null; ui.state = null; ui.draft = null; ui.error = ""; render(); }
+  if (act === "back") { ui.view = "list"; ui.selected = null; ui.state = null; ui.confirmDelete = false; ui.error = ""; ui.details = null; render(); }
+  else if (act === "lock") { ui.pass = ""; ui.passInput = ""; setPass(""); ui.view = "gate"; ui.clients = []; ui.selected = null; ui.state = null; ui.draft = null; ui.details = null; ui.error = ""; render(); }
   else if (act === "open") {
     const c = ui.clients.find((x) => x.id === btn.dataset.id);
     if (c) openClient(c);
   }
   else if (act === "copy") copyLink(btn.dataset.token, btn.dataset.id);
+  else if (act === "sort") { ui.sort = btn.dataset.sort === "payment" ? "payment" : "name"; render(); }
+  else if (act === "edit-details") {
+    const c = ui.clients.find((x) => x.id === btn.dataset.id) || (ui.selected && ui.selected.id === btn.dataset.id ? ui.selected : null);
+    if (c) openDetails(c, ui.view === "detail" ? "detail" : "list");
+  }
+  else if (act === "leave-details") leaveDetails();
+  else if (act === "plus-month") {
+    const c = ui.clients.find((x) => x.id === btn.dataset.id) || (ui.selected && ui.selected.id === btn.dataset.id ? ui.selected : null);
+    if (c) bumpPayment(c);
+  }
+  else if (act === "det-plus-month") {
+    if (ui.details) {
+      const base = isoDate(ui.details.payment_date) || todayISO();
+      ui.details.payment_date = addMonths(base, 1);
+      render();
+    }
+  }
   else if (act === "edit-plan") openEditor();
   else if (act === "leave-edit") requestLeaveEditor();
   else if (act === "discard-yes") leaveEditor();
@@ -1086,6 +1433,12 @@ function onInput(e) {
     if (btn) btn.disabled = ui.busy || !ui.newName.trim();
   }
   else if (keep === "draft-name") ui.draft.name = val;
+  else if (keep === "day-name") { setDraftDayName(el.dataset.id, val); render(); }
+  else if (keep === "det-name") ui.details.name = val;
+  else if (keep === "det-height") ui.details.height = val;
+  else if (keep === "det-start") { ui.details.start_date = val; render(); }
+  else if (keep === "det-pay") { ui.details.payment_date = val; render(); }
+  else if (keep === "det-notes") ui.details.notes = val;
   else if (keep === "ex-name") patchEx(el.dataset.id, { name: val });
   else if (keep === "ex-reps") patchEx(el.dataset.id, { reps: val });
   else if (keep === "ex-cue") patchEx(el.dataset.id, { cue: val });
@@ -1112,6 +1465,8 @@ function onSubmit(e) {
     loadList();
   } else if (form.dataset.act === "add") {
     addClient(ui.newName);
+  } else if (form.dataset.act === "save-details") {
+    saveDetails();
   }
 }
 

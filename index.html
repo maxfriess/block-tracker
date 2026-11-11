@@ -843,6 +843,46 @@ function dayByWeekday(wd) {
   return d;
 }
 
+function cleanDayName(val) {
+  return String(val ?? "").trim().slice(0, 24);
+}
+
+function dayNameMap() {
+  return (store && store.dayNames && typeof store.dayNames === "object" && !Array.isArray(store.dayNames)) ? store.dayNames : {};
+}
+
+function displayDayName(id) {
+  const override = cleanDayName(dayNameMap()[id]);
+  if (override) return override;
+  const d = DAYS.find((x) => x.id === id);
+  return (d && d.name) || id;
+}
+
+function displayDayShort(id) {
+  const override = cleanDayName(dayNameMap()[id]);
+  if (override) return override;
+  const d = DAYS.find((x) => x.id === id);
+  return (d && d.short) || id;
+}
+
+function normalizeDayNames(src) {
+  const names = {};
+  if (!src || typeof src !== "object" || Array.isArray(src)) return names;
+  for (const [k, v] of Object.entries(src)) {
+    const t = cleanDayName(v);
+    if (t) names[k] = t;
+  }
+  return names;
+}
+
+function setDayName(id, val) {
+  const next = { ...(store.dayNames || {}) };
+  const t = cleanDayName(val);
+  if (!t) delete next[id];
+  else next[id] = t;
+  store.dayNames = next;
+}
+
 function defaultMeals() {
   return Array.from({ length: 6 }, (_, i) => ({ id: `meal-${i + 1}`, name: `Meal ${i + 1}`, items: [] }));
 }
@@ -1050,7 +1090,7 @@ function volumeRows(plans) {
     const exercises = plans[day.id] ?? day.exercises;
     for (const ex of exercises) {
       const muscles = exerciseMuscles(ex);
-      const src = { dayId: day.id, day: day.short, exerciseId: ex.id, name: ex.name, sets: ex.sets };
+      const src = { dayId: day.id, day: displayDayShort(day.id), exerciseId: ex.id, name: ex.name, sets: ex.sets };
       if (!muscles.length) unassigned.push(src);
       else for (const m of muscles) map.get(m)?.push(src);
     }
@@ -1075,6 +1115,7 @@ function defaultStore() {
     customFoods: [],
     meals: defaultMeals(),
     checkIns: {},
+    dayNames: {},
     updatedAt: 0,
     coachEditAt: 0
   };
@@ -1088,6 +1129,7 @@ function isStoreEmpty(st) {
   if (Array.isArray(st.sessions) && st.sessions.length) return false;
   if (st.plans && typeof st.plans === "object" && Object.keys(st.plans).length) return false;
   if (st.library && typeof st.library === "object" && Object.keys(st.library).length) return false;
+  if (st.dayNames && typeof st.dayNames === "object" && Object.keys(st.dayNames).length) return false;
   if (st.weights && typeof st.weights === "object" && Object.keys(st.weights).length) return false;
   if (Array.isArray(st.customFoods) && st.customFoods.length) return false;
   if (st.checkIns && typeof st.checkIns === "object" && Object.keys(st.checkIns).length) return false;
@@ -1102,6 +1144,7 @@ function applyStateFields(target, st) {
   if (Array.isArray(st.sessions)) target.sessions = st.sessions;
   if (st.plans && typeof st.plans === "object") target.plans = st.plans;
   if (st.library && typeof st.library === "object") target.library = st.library;
+  if (st.dayNames && typeof st.dayNames === "object") target.dayNames = normalizeDayNames(st.dayNames);
   if (st.weights && typeof st.weights === "object") target.weights = st.weights;
   if (Array.isArray(st.customFoods)) target.customFoods = st.customFoods;
   target.meals = normalizeMeals(st.meals);
@@ -1122,6 +1165,7 @@ function snapshotState() {
     customFoods: store.customFoods,
     meals: store.meals,
     checkIns: store.checkIns,
+    dayNames: store.dayNames || {},
     updatedAt: store.updatedAt || 0,
     coachEditAt: store.coachEditAt || 0
   };
@@ -1217,6 +1261,7 @@ function adoptRemote(remote) {
   store.customFoods = next.customFoods;
   store.meals = next.meals;
   store.checkIns = next.checkIns;
+  store.dayNames = next.dayNames || {};
   store.updatedAt = next.updatedAt || 0;
   store.coachEditAt = next.coachEditAt || 0;
   writeLocal(snapshotState());
@@ -1251,6 +1296,9 @@ function applyCoachPlanIfNewer(remote, opts) {
   if (remoteEdit <= localEdit) return false;
   if (remote.plans && typeof remote.plans === "object") store.plans = remote.plans;
   if (remote.library && typeof remote.library === "object") store.library = remote.library;
+  if (Object.prototype.hasOwnProperty.call(remote, "dayNames")) {
+    store.dayNames = normalizeDayNames(remote.dayNames);
+  }
   store.coachEditAt = remoteEdit;
   if (remote.unit === "kg" || remote.unit === "lb") store.unit = remote.unit;
   writeLocal(snapshotState());
@@ -1553,7 +1601,7 @@ function exportCsv() {
       entries.forEach((row, i) => {
         if (!(row.weight.trim() || row.reps.trim() || row.done)) return;
         const target = ex ? (setRanges(ex)[i] || ex.reps) : "";
-        lines.push([session.date, day.name, ex?.name ?? "Exercise", i + 1, row.weight, session.unit, row.reps, row.done ? "yes" : "no", target].map(csvEscape).join(","));
+        lines.push([session.date, displayDayName(session.dayId), ex?.name ?? "Exercise", i + 1, row.weight, session.unit, row.reps, row.done ? "yes" : "no", target].map(csvEscape).join(","));
       });
     }
   }
@@ -1627,15 +1675,15 @@ function renderTrain() {
     const d = dayByWeekday(i === 6 ? 0 : i + 1);
     const active = d.id === ui.dayId;
     const meta = d.id === scheduledId && isToday ? "Today" : d.rest ? "Off" : "·";
-    return `<button type="button" class="chip${active ? " active" : ""}" data-act="chip" data-id="${esc(d.id)}"><span class="name">${esc(d.short)}</span><span class="meta">${esc(meta)}</span></button>`;
+    return `<button type="button" class="chip${active ? " active" : ""}" data-act="chip" data-id="${esc(d.id)}"><span class="name">${esc(displayDayShort(d.id))}</span><span class="meta">${esc(meta)}</span></button>`;
   }).join("");
 
   let body = "";
   if (day.rest) {
-    body = `<div class="rest-card"><h3>No session</h3><p>If you still train, pick Push, Pull, Legs, Quads, or Back above.</p></div>`;
+    body = `<div class="rest-card"><h3>No session</h3><p>If you still train, pick a training day above.</p></div>`;
   } else if (current) {
     const copy = prev
-      ? `<button type="button" class="copy-last" data-act="copy-last">Copy last ${esc(day.short.toLowerCase())}${prev.unit === current.unit ? "" : ` (${esc(prev.unit)})`}</button>`
+      ? `<button type="button" class="copy-last" data-act="copy-last">Copy last ${esc(displayDayShort(day.id).toLowerCase())}${prev.unit === current.unit ? "" : ` (${esc(prev.unit)})`}</button>`
       : "";
     const cards = exercises.map((ex, idx) => renderExercise(ex, idx + 1, exercises.length, current.sets[ex.id] ?? [], prev?.sets[ex.id], prev?.unit, step, current.unit)).join("");
     const addMuscles = MUSCLES.map((m) => {
@@ -1654,7 +1702,7 @@ function renderTrain() {
           <input class="field center" value="${esc(ui.addReps)}" aria-label="Rep range" data-keep="addReps">
         </div>
         <div class="muscle-row">${addMuscles}</div>
-        <button type="submit" class="btn-primary mt-3" ${!ui.addName.trim() || ui.addMuscles.length === 0 ? "disabled" : ""}>Add to ${esc(day.short)}</button>
+        <button type="submit" class="btn-primary mt-3" ${!ui.addName.trim() || ui.addMuscles.length === 0 ? "disabled" : ""}>Add to ${esc(displayDayShort(day.id))}</button>
       </form>
       <button type="button" class="btn-primary ${current.finished ? "btn-ghost done-session" : ""}" data-act="finish">${current.finished ? "Logged" : "Mark session done"}</button>`;
   }
@@ -1672,10 +1720,13 @@ function renderTrain() {
     ${deload ? `<p class="banner">Deload window. Cut about a third of the sets and stay at 3 reps in reserve. Next block, add weight and go back to these sets.</p>` : ""}
     <div>
       <div class="session-head">
-        <h2 class="session-title">${esc(day.name)}</h2>
+        <h2 class="session-title">${esc(displayDayName(day.id))}</h2>
         ${day.rest ? "" : `<p class="progress">${done}/${total}</p>`}
       </div>
       <p class="note">${esc(day.note)}</p>
+      <label class="flabel" style="margin-top:.75rem">Session name
+        <input class="field mt-2" value="${esc(cleanDayName((store.dayNames || {})[day.id]))}" placeholder="${esc(day.name)}" maxlength="24" aria-label="Session name" data-keep="day-name">
+      </label>
     </div>
     ${body}
   </div>`;
@@ -1745,7 +1796,7 @@ function renderLog() {
     }).join("")}</ul></div>` : "";
     return `<article class="card">
       <button type="button" class="log-row" data-act="toggle-log" data-id="${esc(s.id)}">
-        <div class="log-main"><h3>${esc(day.name)}</h3><p>${esc(fmtEEE(s.date))}${s.finished ? "" : " · in progress"}</p></div>
+        <div class="log-main"><h3>${esc(displayDayName(s.dayId))}</h3><p>${esc(fmtEEE(s.date))}${s.finished ? "" : " · in progress"}</p></div>
         <div class="log-right"><p class="num">${doneCount(s)}</p><p class="lbl">sets</p></div>
       </button>${detail}
     </article>`;
@@ -1757,7 +1808,7 @@ function renderLifts() {
   if (ui.liftId) {
     const items = DAYS.filter((d) => !d.rest).flatMap((d) => planFor(d.id, store.plans).map((ex) => ({ day: d, exercise: ex })));
     const found = items.find((x) => x.exercise.id === ui.liftId);
-    if (found) return renderLiftDetail(found.exercise, found.day.name, liftPoints(store.sessions, found.exercise.id));
+    if (found) return renderLiftDetail(found.exercise, displayDayName(found.day.id), liftPoints(store.sessions, found.exercise.id));
   }
   const items = DAYS.filter((d) => !d.rest).flatMap((d) => planFor(d.id, store.plans).map((ex) => ({ day: d, exercise: ex })));
   const groups = {};
@@ -1776,7 +1827,7 @@ function renderLifts() {
         </span>
       </button>`;
     }).join("");
-    return `<section><h3 class="lift-group-title" style="margin:0 0 .5rem;font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--muted)">${esc(dayById(dayId).short)}</h3><div class="lift-list">${rows}</div></section>`;
+    return `<section><h3 class="lift-group-title" style="margin:0 0 .5rem;font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--muted)">${esc(displayDayShort(dayId))}</h3><div class="lift-list">${rows}</div></section>`;
   }).join("");
   return `<div class="page-stack"><h2 class="page-title">Lifts</h2>${sections}</div>`;
 }
@@ -2103,6 +2154,7 @@ function onInput(e) {
   const val = el.value;
   if (keep === "addName") ui.addName = val;
   else if (keep === "addReps") ui.addReps = val;
+  else if (keep === "day-name") { setDayName(ui.dayId, val); persist(); }
   else if (keep === "ex-reps") updateExercise(el.dataset.ex, { reps: val });
   else if (keep === "target") updateExercise(el.dataset.ex, { setIndex: Number(el.dataset.i), setRange: val });
   else if (keep === "weight") patchSet(el.dataset.ex, Number(el.dataset.i), { weight: val });
@@ -2149,6 +2201,12 @@ function onInput(e) {
 
 function onBlur(e) {
   const el = e.target;
+  if (el.dataset.keep === "day-name") {
+    setDayName(ui.dayId, el.value);
+    persist();
+    render();
+    return;
+  }
   if (el.dataset.keep === "ex-reps") {
     const next = el.value.trim() || "8–12";
     const ex = planFor(ui.dayId, store.plans).find((x) => x.id === el.dataset.ex);
