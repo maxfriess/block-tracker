@@ -696,6 +696,24 @@ main {
 .sync-dot[data-state="error"],
 .sync-dot[data-state="idle"] { background: #6d6a60; }
 .privacy-note { margin-top: 1.25rem; }
+.plan-toast {
+  position: fixed;
+  left: 50%;
+  bottom: calc(5.6rem + var(--safe-bottom));
+  transform: translateX(-50%);
+  z-index: 40;
+  max-width: calc(100% - 2rem);
+  padding: 0.7rem 1.05rem;
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--fg);
+  box-shadow: var(--shadow), inset 0 0 0 1px var(--line);
+  font-size: 0.8125rem;
+  line-height: 1.35;
+  text-align: center;
+  pointer-events: none;
+}
+.plan-toast[hidden] { display: none; }
 
 </style>
 </head>
@@ -1057,13 +1075,15 @@ function defaultStore() {
     customFoods: [],
     meals: defaultMeals(),
     checkIns: {},
-    updatedAt: 0
+    updatedAt: 0,
+    coachEditAt: 0
   };
 }
 
 function isStoreEmpty(st) {
   if (!st || typeof st !== "object") return true;
   if (typeof st.updatedAt === "number" && st.updatedAt > 0) return false;
+  if (typeof st.coachEditAt === "number" && st.coachEditAt > 0) return false;
   if (st.unit && st.unit !== "kg") return false;
   if (Array.isArray(st.sessions) && st.sessions.length) return false;
   if (st.plans && typeof st.plans === "object" && Object.keys(st.plans).length) return false;
@@ -1087,6 +1107,7 @@ function applyStateFields(target, st) {
   target.meals = normalizeMeals(st.meals);
   if (st.checkIns && typeof st.checkIns === "object") target.checkIns = st.checkIns;
   if (typeof st.updatedAt === "number" && Number.isFinite(st.updatedAt)) target.updatedAt = st.updatedAt;
+  if (typeof st.coachEditAt === "number" && Number.isFinite(st.coachEditAt)) target.coachEditAt = st.coachEditAt;
   return target;
 }
 
@@ -1101,7 +1122,8 @@ function snapshotState() {
     customFoods: store.customFoods,
     meals: store.meals,
     checkIns: store.checkIns,
-    updatedAt: store.updatedAt || 0
+    updatedAt: store.updatedAt || 0,
+    coachEditAt: store.coachEditAt || 0
   };
 }
 
@@ -1196,8 +1218,46 @@ function adoptRemote(remote) {
   store.meals = next.meals;
   store.checkIns = next.checkIns;
   store.updatedAt = next.updatedAt || 0;
+  store.coachEditAt = next.coachEditAt || 0;
   writeLocal(snapshotState());
   if (typeof ensureSession === "function") ensureSession();
+}
+
+let planToastTimer = null;
+
+function showPlanToast(message) {
+  let el = document.getElementById("plan-toast");
+  if (!el) {
+    el = document.createElement("div");
+    el.id = "plan-toast";
+    el.className = "plan-toast";
+    el.setAttribute("role", "status");
+    document.body.appendChild(el);
+  }
+  el.textContent = message || "Your coach updated your plan";
+  el.hidden = false;
+  if (planToastTimer) clearTimeout(planToastTimer);
+  planToastTimer = setTimeout(() => { el.hidden = true; }, 4000);
+}
+
+function coachEditAtOf(st) {
+  return Number(st && st.coachEditAt) || 0;
+}
+
+function applyCoachPlanIfNewer(remote, opts) {
+  if (!remote) return false;
+  const remoteEdit = coachEditAtOf(remote);
+  const localEdit = coachEditAtOf(store);
+  if (remoteEdit <= localEdit) return false;
+  if (remote.plans && typeof remote.plans === "object") store.plans = remote.plans;
+  if (remote.library && typeof remote.library === "object") store.library = remote.library;
+  store.coachEditAt = remoteEdit;
+  if (remote.unit === "kg" || remote.unit === "lb") store.unit = remote.unit;
+  writeLocal(snapshotState());
+  if (typeof ensureSession === "function") ensureSession();
+  if (opts && opts.toast) showPlanToast();
+  if (typeof render === "function") render();
+  return true;
 }
 
 async function hydrateFromServer() {
@@ -1215,6 +1275,7 @@ async function hydrateFromServer() {
       else setSyncStatus("synced");
       return;
     }
+    const planChanged = applyCoachPlanIfNewer(remote, { toast: !localEmpty });
     const remoteAt = Number(remote.updatedAt) || 0;
     const localAt = Number(store.updatedAt) || 0;
     if (localEmpty || remoteAt > localAt) {
@@ -1260,6 +1321,7 @@ async function flushSync() {
       throw err;
     }
     const remoteAt = remote ? (Number(remote.updatedAt) || 0) : 0;
+    if (remote) applyCoachPlanIfNewer(remote, { toast: true });
     if (remote && !isStoreEmpty(remote) && remoteAt > pushingAt) {
       backupLocalState("server-newer-before-save");
       adoptRemote(remote);
@@ -1267,7 +1329,8 @@ async function flushSync() {
       setSyncStatus("synced");
       return;
     }
-    await rpc("client_save", { p_token: clientToken, p_state: payload });
+    const outgoing = snapshotState();
+    await rpc("client_save", { p_token: clientToken, p_state: outgoing });
     setSyncStatus("synced");
   } catch (err) {
     syncQueued = true;
@@ -1291,6 +1354,8 @@ function onOffline() { setSyncStatus("offline"); }
 function onVis() {
   if (document.visibilityState === "hidden") {
     if (syncQueued) flushSync();
+  } else if (clientToken) {
+    hydrateFromServer();
   }
 }
 
