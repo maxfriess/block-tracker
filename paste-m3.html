@@ -1,0 +1,167 @@
+<!doctype html><title>copy m3</title><textarea id=t style="width:95vw;height:80vh">-- Block tracker: coach home details + renameable session names
+-- Run once in Supabase &gt; SQL Editor.
+-- Does not change the coach passphrase.
+-- Safe to run more than once.
+
+-- Client profile fields filled in by the coach.
+alter table public.clients add column if not exists height text;
+alter table public.clients add column if not exists start_date date;
+alter table public.clients add column if not exists payment_date date;
+alter table public.clients add column if not exists notes text;
+
+-- Return type is changing, so the old function must be dropped first.
+drop function if exists public.coach_list(text);
+
+create function public.coach_list(p_pass text)
+returns table (
+  id uuid,
+  name text,
+  token text,
+  created_at timestamptz,
+  updated_at timestamptz,
+  height text,
+  start_date date,
+  payment_date date,
+  notes text
+)
+language plpgsql security definer set search_path = public, extensions as $$
+begin
+  if not public.coach_ok(p_pass) then raise exception &#x27;not allowed&#x27;; end if;
+  return query
+    select c.id, c.name, c.token, c.created_at, cs.updated_at,
+           c.height, c.start_date, c.payment_date, c.notes
+    from public.clients c
+    left join public.client_state cs on cs.client_id = c.id
+    order by c.created_at desc;
+end;
+$$;
+
+-- Update the coach-filled profile fields for a client.
+create or replace function public.coach_set_details(
+  p_pass text,
+  p_client uuid,
+  p_name text,
+  p_height text,
+  p_start_date date,
+  p_payment_date date,
+  p_notes text
+)
+returns void language plpgsql security definer set search_path = public as $$
+declare
+  v_name text;
+  v_height text;
+  v_notes text;
+begin
+  if not public.coach_ok(p_pass) then raise exception &#x27;not allowed&#x27;; end if;
+  v_name := nullif(left(trim(coalesce(p_name, &#x27;&#x27;)), 80), &#x27;&#x27;);
+  if v_name is null then
+    raise exception &#x27;name required&#x27;;
+  end if;
+  v_height := nullif(left(trim(coalesce(p_height, &#x27;&#x27;)), 40), &#x27;&#x27;);
+  v_notes := nullif(left(trim(coalesce(p_notes, &#x27;&#x27;)), 1000), &#x27;&#x27;);
+  update public.clients
+     set name = v_name,
+         height = v_height,
+         start_date = p_start_date,
+         payment_date = p_payment_date,
+         notes = v_notes
+   where id = p_client;
+  if not found then raise exception &#x27;not found&#x27;; end if;
+end;
+$$;
+
+-- Signature is changing (new trailing p_day_names). Drop the 5-arg version first
+-- so PostgREST does not keep an overload.
+drop function if exists public.coach_set_plans(text, uuid, jsonb, jsonb, text);
+
+create function public.coach_set_plans(
+  p_pass text,
+  p_client uuid,
+  p_plans jsonb,
+  p_library jsonb,
+  p_unit text default null,
+  p_day_names jsonb default null
+)
+returns void language plpgsql security definer set search_path = public as $$
+declare
+  v_state jsonb;
+  v_edit bigint;
+begin
+  if not public.coach_ok(p_pass) then raise exception &#x27;not allowed&#x27;; end if;
+  if not exists (select 1 from public.clients where id = p_client) then
+    raise exception &#x27;not found&#x27;;
+  end if;
+  if p_day_names is not null and jsonb_typeof(p_day_names) is distinct from &#x27;object&#x27; then
+    raise exception &#x27;invalid day names&#x27;;
+  end if;
+  if pg_column_size(coalesce(p_plans, &#x27;{}&#x27;::jsonb))
+     + pg_column_size(coalesce(p_library, &#x27;{}&#x27;::jsonb))
+     + pg_column_size(coalesce(p_day_names, &#x27;{}&#x27;::jsonb)) &gt; 2000000 then
+    raise exception &#x27;state too large&#x27;;
+  end if;
+  v_edit := (extract(epoch from clock_timestamp()) * 1000)::bigint;
+  select state into v_state from public.client_state where client_id = p_client;
+  v_state := coalesce(v_state, &#x27;{}&#x27;::jsonb);
+  v_state := jsonb_set(v_state, &#x27;{plans}&#x27;, coalesce(p_plans, &#x27;{}&#x27;::jsonb), true);
+  v_state := jsonb_set(v_state, &#x27;{library}&#x27;, coalesce(p_library, &#x27;{}&#x27;::jsonb), true);
+  v_state := jsonb_set(v_state, &#x27;{coachEditAt}&#x27;, to_jsonb(v_edit), true);
+  if p_unit in (&#x27;kg&#x27;, &#x27;lb&#x27;) then
+    v_state := jsonb_set(v_state, &#x27;{unit}&#x27;, to_jsonb(p_unit), true);
+  end if;
+  if p_day_names is not null then
+    v_state := jsonb_set(v_state, &#x27;{dayNames}&#x27;, p_day_names, true);
+  end if;
+  insert into public.client_state (client_id, state, updated_at)
+  values (p_client, v_state, now())
+  on conflict (client_id) do update set state = excluded.state, updated_at = now();
+end;
+$$;
+
+-- If the coach has edited the plan more recently than this save, keep the stored
+-- plans, library, dayNames and coachEditAt, and take everything else from the incoming state.
+create or replace function public.client_save(p_token text, p_state jsonb)
+returns void language plpgsql security definer set search_path = public as $$
+declare
+  v_client uuid;
+  v_stored jsonb;
+  v_incoming jsonb;
+  v_stored_edit bigint;
+  v_in_edit bigint;
+  v_merged jsonb;
+begin
+  if pg_column_size(p_state) &gt; 2000000 then
+    raise exception &#x27;state too large&#x27;;
+  end if;
+  select id into v_client from public.clients where token = p_token;
+  if v_client is null then
+    return;
+  end if;
+  v_incoming := coalesce(p_state, &#x27;{}&#x27;::jsonb);
+  select state into v_stored from public.client_state where client_id = v_client;
+  v_stored_edit := coalesce((v_stored-&gt;&gt;&#x27;coachEditAt&#x27;)::bigint, 0);
+  v_in_edit := coalesce((v_incoming-&gt;&gt;&#x27;coachEditAt&#x27;)::bigint, 0);
+  if v_stored is not null and v_stored_edit &gt; v_in_edit then
+    v_merged := v_incoming;
+    if v_stored ? &#x27;plans&#x27; then
+      v_merged := jsonb_set(v_merged, &#x27;{plans}&#x27;, v_stored-&gt;&#x27;plans&#x27;, true);
+    end if;
+    if v_stored ? &#x27;library&#x27; then
+      v_merged := jsonb_set(v_merged, &#x27;{library}&#x27;, v_stored-&gt;&#x27;library&#x27;, true);
+    end if;
+    if v_stored ? &#x27;dayNames&#x27; then
+      v_merged := jsonb_set(v_merged, &#x27;{dayNames}&#x27;, v_stored-&gt;&#x27;dayNames&#x27;, true);
+    end if;
+    v_merged := jsonb_set(v_merged, &#x27;{coachEditAt}&#x27;, to_jsonb(v_stored_edit), true);
+  else
+    v_merged := v_incoming;
+  end if;
+  insert into public.client_state (client_id, state, updated_at)
+  values (v_client, v_merged, now())
+  on conflict (client_id) do update set state = excluded.state, updated_at = now();
+end;
+$$;
+
+grant execute on function public.coach_list(text) to anon;
+grant execute on function public.coach_set_details(text, uuid, text, text, date, date, text) to anon;
+grant execute on function public.coach_set_plans(text, uuid, jsonb, jsonb, text, jsonb) to anon;
+</textarea><script>t.focus();t.select()</script>
