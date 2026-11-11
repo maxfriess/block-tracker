@@ -6,8 +6,11 @@
 <title>Block</title>
 <meta name="description" content="Log the classic mass block. Weights stay on this phone.">
 <meta name="theme-color" content="#0b0c0a">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Block">
-<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
 <style>
 :root {
   --bg: #0b0c0a;
@@ -671,6 +674,29 @@ main {
 .page-stack-lg { display: flex; flex-direction: column; gap: 1.5rem; }
 .lift-pages { display: flex; flex-direction: column; gap: 1rem; }
 
+.header-actions { display: flex; align-items: center; gap: 0.55rem; }
+.sync-dot {
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 99px;
+  background: #6d6a60;
+  box-shadow: 0 0 0 3px rgba(200, 245, 74, 0);
+  flex: 0 0 auto;
+}
+.sync-dot[data-state="synced"] {
+  background: var(--primary);
+  box-shadow: 0 0 8px rgba(200, 245, 74, 0.55);
+}
+.sync-dot[data-state="pending"] {
+  background: var(--primary);
+  opacity: 0.45;
+  box-shadow: 0 0 8px rgba(200, 245, 74, 0.2);
+}
+.sync-dot[data-state="offline"],
+.sync-dot[data-state="error"],
+.sync-dot[data-state="idle"] { background: #6d6a60; }
+.privacy-note { margin-top: 1.25rem; }
+
 </style>
 </head>
 <body>
@@ -685,7 +711,41 @@ const DOW = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 const DOW_MON = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 const STORAGE_KEY = "block-log-v1";
+const TOKEN_KEY = "block-client-token";
+const SB_URL = "https://mflafztrootwmnfobmrc.supabase.co";
+const SB_ANON = "sb_publishable_FzWfw5Z0kCfyAnM7RQ2lAQ_-el6KFzO";
 const ZERO_MACROS = { kcal: 0, protein: 0, carbs: 0, fat: 0 };
+
+function normalizeToken(raw) {
+  const t = String(raw ?? "").trim();
+  if (!t || t.length > 128 || !/^[A-Za-z0-9_-]+$/.test(t)) return "";
+  return t;
+}
+
+function tokenFromUrl() {
+  try { return normalizeToken(new URLSearchParams(location.search).get("c")); }
+  catch (err) { return ""; }
+}
+
+function rememberedToken() {
+  try { return normalizeToken(localStorage.getItem(TOKEN_KEY) || ""); }
+  catch (err) { return ""; }
+}
+
+function rememberToken(token) {
+  try { if (token) localStorage.setItem(TOKEN_KEY, token); }
+  catch (err) {}
+}
+
+const clientToken = (() => {
+  const fromUrl = tokenFromUrl();
+  if (fromUrl) { rememberToken(fromUrl); return fromUrl; }
+  return rememberedToken();
+})();
+
+function storageKey() {
+  return clientToken ? STORAGE_KEY + ":" + clientToken : STORAGE_KEY;
+}
 
 const ICONS = {
   settings: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>',
@@ -996,33 +1056,42 @@ function defaultStore() {
     weights: {},
     customFoods: [],
     meals: defaultMeals(),
-    checkIns: {}
+    checkIns: {},
+    updatedAt: 0
   };
 }
 
-function loadStore() {
-  const store = defaultStore();
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return store;
-    const parsed = JSON.parse(raw);
-    const st = parsed?.state ?? parsed;
-    if (!st || typeof st !== "object") return store;
-    if (st.unit === "kg" || st.unit === "lb") store.unit = st.unit;
-    if (typeof st.startDate === "string" && /^\d{4}-\d{2}-\d{2}$/.test(st.startDate)) store.startDate = st.startDate;
-    if (Array.isArray(st.sessions)) store.sessions = st.sessions;
-    if (st.plans && typeof st.plans === "object") store.plans = st.plans;
-    if (st.library && typeof st.library === "object") store.library = st.library;
-    if (st.weights && typeof st.weights === "object") store.weights = st.weights;
-    if (Array.isArray(st.customFoods)) store.customFoods = st.customFoods;
-    store.meals = normalizeMeals(st.meals);
-    if (st.checkIns && typeof st.checkIns === "object") store.checkIns = st.checkIns;
-  } catch (err) {}
-  return store;
+function isStoreEmpty(st) {
+  if (!st || typeof st !== "object") return true;
+  if (typeof st.updatedAt === "number" && st.updatedAt > 0) return false;
+  if (st.unit && st.unit !== "kg") return false;
+  if (Array.isArray(st.sessions) && st.sessions.length) return false;
+  if (st.plans && typeof st.plans === "object" && Object.keys(st.plans).length) return false;
+  if (st.library && typeof st.library === "object" && Object.keys(st.library).length) return false;
+  if (st.weights && typeof st.weights === "object" && Object.keys(st.weights).length) return false;
+  if (Array.isArray(st.customFoods) && st.customFoods.length) return false;
+  if (st.checkIns && typeof st.checkIns === "object" && Object.keys(st.checkIns).length) return false;
+  if (Array.isArray(st.meals) && st.meals.some((m) => (m.items && m.items.length) || (m.name && !/^Meal \d+$/.test(m.name)))) return false;
+  return true;
 }
 
-function persist() {
-  const state = {
+function applyStateFields(target, st) {
+  if (!st || typeof st !== "object") return target;
+  if (st.unit === "kg" || st.unit === "lb") target.unit = st.unit;
+  if (typeof st.startDate === "string" && /^\d{4}-\d{2}-\d{2}$/.test(st.startDate)) target.startDate = st.startDate;
+  if (Array.isArray(st.sessions)) target.sessions = st.sessions;
+  if (st.plans && typeof st.plans === "object") target.plans = st.plans;
+  if (st.library && typeof st.library === "object") target.library = st.library;
+  if (st.weights && typeof st.weights === "object") target.weights = st.weights;
+  if (Array.isArray(st.customFoods)) target.customFoods = st.customFoods;
+  target.meals = normalizeMeals(st.meals);
+  if (st.checkIns && typeof st.checkIns === "object") target.checkIns = st.checkIns;
+  if (typeof st.updatedAt === "number" && Number.isFinite(st.updatedAt)) target.updatedAt = st.updatedAt;
+  return target;
+}
+
+function snapshotState() {
+  return {
     unit: store.unit,
     startDate: store.startDate,
     sessions: store.sessions,
@@ -1031,9 +1100,226 @@ function persist() {
     weights: store.weights,
     customFoods: store.customFoods,
     meals: store.meals,
-    checkIns: store.checkIns
+    checkIns: store.checkIns,
+    updatedAt: store.updatedAt || 0
   };
-  localStorage.setItem(STORAGE_KEY, JSON.stringify({ state, version: 0 }));
+}
+
+function writeLocal(state) {
+  localStorage.setItem(storageKey(), JSON.stringify({ state, version: 0 }));
+}
+
+function backupLocalState(reason) {
+  if (!clientToken || isStoreEmpty(store)) return;
+  try {
+    localStorage.setItem(storageKey() + ":backup", JSON.stringify({
+      state: snapshotState(),
+      version: 0,
+      backedUpAt: Date.now(),
+      reason: reason || "conflict"
+    }));
+  } catch (err) {}
+}
+
+let syncStatus = clientToken ? "idle" : "";
+let syncTimer = null;
+let syncInFlight = false;
+let syncQueued = false;
+
+function syncTitle() {
+  if (syncStatus === "synced") return "Synced with your coach";
+  if (syncStatus === "pending") return "Saving to your coach";
+  if (syncStatus === "offline") return "Offline — changes stay on this phone";
+  if (syncStatus === "error") return "Could not sync — changes stay on this phone";
+  return "Connecting";
+}
+
+function setSyncStatus(next) {
+  if (!clientToken) return;
+  if (syncStatus === next) {
+    const el = document.querySelector(".sync-dot");
+    if (el) { el.dataset.state = next; el.title = syncTitle(); el.setAttribute("aria-label", syncTitle()); }
+    return;
+  }
+  syncStatus = next;
+  const el = document.querySelector(".sync-dot");
+  if (el) { el.dataset.state = next; el.title = syncTitle(); el.setAttribute("aria-label", syncTitle()); }
+}
+
+async function rpc(name, body, opts) {
+  const res = await fetch(SB_URL + "/rest/v1/rpc/" + name, {
+    method: "POST",
+    headers: {
+      apikey: SB_ANON,
+      Authorization: "Bearer " + SB_ANON,
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify(body),
+    keepalive: !!(opts && opts.keepalive)
+  });
+  const text = await res.text();
+  let data = null;
+  if (text) {
+    try { data = JSON.parse(text); }
+    catch (err) { data = text; }
+  }
+  if (!res.ok) {
+    const msg = (data && (data.message || data.error || data.hint)) || text || ("HTTP " + res.status);
+    const err = new Error(typeof msg === "string" ? msg : "request failed");
+    err.status = res.status;
+    err.data = data;
+    throw err;
+  }
+  return data;
+}
+
+function parseServerState(raw) {
+  if (raw == null || raw === "") return null;
+  if (Array.isArray(raw)) raw = raw.length ? raw[0] : null;
+  if (typeof raw === "string") {
+    try { raw = JSON.parse(raw); }
+    catch (err) { return null; }
+  }
+  if (!raw || typeof raw !== "object") return null;
+  return raw;
+}
+
+function adoptRemote(remote) {
+  const next = applyStateFields(defaultStore(), remote);
+  store.unit = next.unit;
+  store.startDate = next.startDate;
+  store.sessions = next.sessions;
+  store.plans = next.plans;
+  store.library = next.library;
+  store.weights = next.weights;
+  store.customFoods = next.customFoods;
+  store.meals = next.meals;
+  store.checkIns = next.checkIns;
+  store.updatedAt = next.updatedAt || 0;
+  writeLocal(snapshotState());
+  if (typeof ensureSession === "function") ensureSession();
+}
+
+async function hydrateFromServer() {
+  if (!clientToken) return;
+  if (typeof navigator !== "undefined" && navigator.onLine === false) {
+    setSyncStatus("offline");
+    return;
+  }
+  try {
+    const remote = parseServerState(await rpc("client_load", { p_token: clientToken }));
+    const localEmpty = isStoreEmpty(store);
+    const remoteEmpty = !remote || isStoreEmpty(remote);
+    if (remoteEmpty) {
+      if (!localEmpty) queueSync(true);
+      else setSyncStatus("synced");
+      return;
+    }
+    const remoteAt = Number(remote.updatedAt) || 0;
+    const localAt = Number(store.updatedAt) || 0;
+    if (localEmpty || remoteAt > localAt) {
+      if (!localEmpty && localAt) backupLocalState("server-newer");
+      adoptRemote(remote);
+      render();
+      setSyncStatus("synced");
+    } else if (localAt > remoteAt) {
+      queueSync(true);
+    } else {
+      setSyncStatus("synced");
+    }
+  } catch (err) {
+    setSyncStatus((typeof navigator !== "undefined" && navigator.onLine === false) ? "offline" : "error");
+  }
+}
+
+function queueSync(immediate) {
+  if (!clientToken) return;
+  syncQueued = true;
+  setSyncStatus((typeof navigator !== "undefined" && navigator.onLine === false) ? "offline" : "pending");
+  if (syncTimer) { clearTimeout(syncTimer); syncTimer = null; }
+  if (immediate) flushSync();
+  else syncTimer = setTimeout(flushSync, 2000);
+}
+
+async function flushSync() {
+  if (!clientToken || !syncQueued || syncInFlight) return;
+  if (typeof navigator !== "undefined" && navigator.onLine === false) {
+    setSyncStatus("offline");
+    return;
+  }
+  if (syncTimer) { clearTimeout(syncTimer); syncTimer = null; }
+  syncInFlight = true;
+  const pushingAt = Number(store.updatedAt) || 0;
+  const payload = snapshotState();
+  syncQueued = false;
+  try {
+    let remote = null;
+    try { remote = parseServerState(await rpc("client_load", { p_token: clientToken })); }
+    catch (err) {
+      syncQueued = true;
+      throw err;
+    }
+    const remoteAt = remote ? (Number(remote.updatedAt) || 0) : 0;
+    if (remote && !isStoreEmpty(remote) && remoteAt > pushingAt) {
+      backupLocalState("server-newer-before-save");
+      adoptRemote(remote);
+      render();
+      setSyncStatus("synced");
+      return;
+    }
+    await rpc("client_save", { p_token: clientToken, p_state: payload });
+    setSyncStatus("synced");
+  } catch (err) {
+    syncQueued = true;
+    setSyncStatus((typeof navigator !== "undefined" && navigator.onLine === false) ? "offline" : "error");
+  } finally {
+    syncInFlight = false;
+    if (syncQueued && typeof navigator !== "undefined" && navigator.onLine !== false) {
+      syncTimer = setTimeout(flushSync, 2000);
+    }
+  }
+}
+
+function onOnline() {
+  if (!clientToken) return;
+  if (syncQueued) flushSync();
+  else hydrateFromServer();
+}
+
+function onOffline() { setSyncStatus("offline"); }
+
+function onVis() {
+  if (document.visibilityState === "hidden") {
+    if (syncQueued) flushSync();
+  }
+}
+
+function onPageHide() {
+  if (!clientToken || !syncQueued || syncInFlight) return;
+  const payload = snapshotState();
+  const localAt = Number(payload.updatedAt) || 0;
+  // Best-effort flush. Skip if we cannot compare with the server from here.
+  rpc("client_save", { p_token: clientToken, p_state: payload }, { keepalive: true }).catch(() => {});
+  // Keep queued so a later online/visibility pass can still reconcile.
+}
+
+function loadStore() {
+  const store = defaultStore();
+  try {
+    const raw = localStorage.getItem(storageKey());
+    if (!raw) return store;
+    const parsed = JSON.parse(raw);
+    const st = parsed?.state ?? parsed;
+    if (!st || typeof st !== "object") return store;
+    applyStateFields(store, st);
+  } catch (err) {}
+  return store;
+}
+
+function persist() {
+  store.updatedAt = Date.now();
+  writeLocal(snapshotState());
+  queueSync(false);
 }
 
 function upsertSession(session) {
@@ -1232,13 +1518,16 @@ function macroCell(label, value) {
 }
 
 function renderHeader() {
+  const actions = clientToken
+    ? `<div class="header-actions"><span class="sync-dot" data-state="${esc(syncStatus)}" title="${esc(syncTitle())}" aria-label="${esc(syncTitle())}"></span><button type="button" class="icon-btn" aria-label="Settings" data-act="settings">${ICONS.settings}</button></div>`
+    : `<button type="button" class="icon-btn" aria-label="Settings" data-act="settings">${ICONS.settings}</button>`;
   return `<header class="header">
     <div>
       <p class="brand-kicker">Block</p>
       <div class="brand-rule"></div>
       <p class="brand-sub">Classic mass · ${esc(store.unit)}</p>
     </div>
-    <button type="button" class="icon-btn" aria-label="Settings" data-act="settings">${ICONS.settings}</button>
+    ${actions}
   </header>`;
 }
 
@@ -1597,6 +1886,7 @@ function renderSettings() {
       <button type="button" class="btn-primary mt-3" data-act="export">Export for Google Sheets</button>
       <p class="lede">Downloads a CSV. In Google Sheets use File, Import, then Upload.</p>
       <button type="button" class="clear" data-act="clear-log">Clear log</button>
+      ${clientToken ? `<p class="lede privacy-note">Your sessions, lifts, weights, check-ins and meals are stored on this phone and copied to your coach, who can see them. To delete your data, ask your coach.</p>` : ""}
     </div>
   </div>`;
 }
@@ -1814,6 +2104,13 @@ document.addEventListener("submit", onSubmit);
 document.addEventListener("input", onInput);
 document.addEventListener("blur", onBlur, true);
 render();
+if (clientToken) {
+  window.addEventListener("online", onOnline);
+  window.addEventListener("offline", onOffline);
+  document.addEventListener("visibilitychange", onVis);
+  window.addEventListener("pagehide", onPageHide);
+  hydrateFromServer();
+}
 
 </script>
 </body>

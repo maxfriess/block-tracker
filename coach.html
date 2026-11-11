@@ -1,0 +1,743 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Block Coach</title>
+<meta name="description" content="Private coach view for Block tracker clients.">
+<meta name="robots" content="noindex">
+<meta name="theme-color" content="#0b0c0a">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Block">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<style>
+
+:root {
+  --bg: #0b0c0a;
+  --bg-2: #121410;
+  --surface: #161814;
+  --surface-2: #1b1e18;
+  --raised: #22251f;
+  --fg: #f4f1e8;
+  --muted: #a39e90;
+  --primary: #c8f54a;
+  --primary-fg: #12140c;
+  --accent: #c8f54a;
+  --line: #2c2f28;
+  --danger: #c4b8a8;
+  --shadow: 0 18px 40px rgba(0, 0, 0, 0.38);
+  --radius: 1.15rem;
+  --radius-sm: 0.85rem;
+  --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-display: "Iowan Old Style", "Palatino Linotype", Palatino, "Times New Roman", Georgia, serif;
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+}
+*, *::before, *::after { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; }
+html { height: 100%; background: var(--bg); }
+body {
+  min-height: 100%;
+  color: var(--fg);
+  font-family: var(--font-sans);
+  background:
+    radial-gradient(1200px 700px at 80% -10%, rgba(200, 245, 74, 0.08), transparent 55%),
+    radial-gradient(900px 500px at 0% 100%, rgba(200, 245, 74, 0.04), transparent 50%),
+    linear-gradient(180deg, #10120e 0%, var(--bg) 28%, var(--bg) 100%);
+  background-attachment: fixed;
+  -webkit-font-smoothing: antialiased;
+}
+button, input { font: inherit; color: inherit; }
+button { cursor: pointer; border: 0; background: none; padding: 0; }
+input { border: 0; }
+:focus { outline: none; }
+:focus-visible { box-shadow: 0 0 0 2px var(--bg), 0 0 0 4px var(--primary); }
+.app { width: 100%; max-width: 32rem; margin: 0 auto; min-height: 100dvh; position: relative; }
+.header {
+  position: sticky; top: 0; z-index: 20;
+  display: flex; align-items: flex-end; justify-content: space-between;
+  padding: calc(1.15rem + var(--safe-top)) 1.25rem 1rem;
+  background:
+    linear-gradient(180deg, rgba(200, 245, 74, 0.07), rgba(255, 255, 255, 0.04) 36%, transparent 70%),
+    rgba(11, 12, 10, 0.58);
+  backdrop-filter: blur(22px) saturate(1.4);
+  -webkit-backdrop-filter: blur(22px) saturate(1.4);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.28);
+}
+.brand-kicker { margin: 0; font-size: 11px; letter-spacing: 0.46em; text-transform: uppercase; color: var(--fg); font-weight: 600; }
+.brand-rule { margin-top: 0.75rem; width: 2.5rem; height: 2px; background: var(--accent); border-radius: 99px; box-shadow: 0 0 16px rgba(200, 245, 74, 0.45); }
+.brand-sub { margin: 0.75rem 0 0; font-size: 10px; letter-spacing: 0.28em; text-transform: uppercase; color: var(--muted); }
+.icon-btn, .text-btn {
+  min-height: 2.75rem; display: inline-flex; align-items: center; justify-content: center;
+  color: var(--fg); border-radius: 999px; padding: 0 0.9rem; font-size: 0.875rem;
+}
+.icon-btn { width: 2.75rem; padding: 0; }
+.icon-btn:hover, .text-btn:hover { background: var(--raised); }
+main { padding: 1rem 1.25rem calc(2.5rem + var(--safe-bottom)); }
+.page-title { margin: 0; font-family: var(--font-display); font-size: 2.35rem; line-height: 0.95; letter-spacing: -0.03em; }
+.lede { margin: 0.5rem 0 0; font-size: 0.875rem; line-height: 1.625; color: var(--muted); }
+.kicker { margin: 0; font-size: 11px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--muted); }
+.card {
+  background: var(--surface);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow), inset 0 0 0 1px var(--line);
+  padding: 1rem 1.1rem;
+}
+.stack { display: flex; flex-direction: column; gap: 0.75rem; }
+.stack-lg { display: flex; flex-direction: column; gap: 1.25rem; }
+.field, .pass {
+  width: 100%; height: 2.85rem; padding: 0 1rem;
+  border-radius: 999px; background: var(--raised);
+  box-shadow: inset 0 0 0 1px var(--line);
+}
+.pass { letter-spacing: 0.12em; }
+.btn-primary, .btn-line, .btn-danger {
+  height: 2.85rem; width: 100%; border-radius: 999px; font-size: 0.9375rem; font-weight: 550;
+}
+.btn-primary { background: var(--primary); color: var(--primary-fg); }
+.btn-line { box-shadow: inset 0 0 0 1px var(--line); color: var(--fg); background: transparent; }
+.btn-danger { box-shadow: inset 0 0 0 1px var(--line); color: var(--danger); background: transparent; }
+.btn-primary:disabled, .btn-line:disabled { opacity: 0.45; cursor: default; }
+.err {
+  margin: 0; padding: 0.85rem 1rem; border-radius: var(--radius-sm);
+  background: rgba(196, 184, 168, 0.1); color: var(--danger); font-size: 0.875rem; line-height: 1.5;
+}
+.ok {
+  margin: 0; padding: 0.85rem 1rem; border-radius: var(--radius-sm);
+  background: rgba(200, 245, 74, 0.1); color: var(--fg); font-size: 0.875rem; line-height: 1.5;
+}
+.ok code, .link-box {
+  display: block; margin-top: 0.45rem; font-size: 0.75rem; word-break: break-all;
+  color: var(--primary); font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+.row {
+  width: 100%; display: flex; align-items: center; gap: 0.75rem;
+  text-align: left; padding: 0; background: none;
+}
+.row-main { flex: 1; min-width: 0; }
+.row-main h3 { margin: 0; font-family: var(--font-display); font-size: 1.45rem; line-height: 1.05; }
+.row-main p { margin: 0.3rem 0 0; font-size: 0.8125rem; color: var(--muted); }
+.mini {
+  flex: 0 0 auto; height: 2.35rem; padding: 0 0.85rem; border-radius: 999px;
+  font-size: 0.75rem; letter-spacing: 0.04em; text-transform: uppercase;
+  box-shadow: inset 0 0 0 1px var(--line); color: var(--fg);
+}
+.mini.copied { background: var(--primary); color: var(--primary-fg); box-shadow: none; }
+.section-title { margin: 1.5rem 0 0.65rem; font-family: var(--font-display); font-size: 1.55rem; letter-spacing: -0.03em; }
+.ex-l { margin: 0; font-size: 0.875rem; font-weight: 500; }
+.set-line { margin: 0.2rem 0 0; font-size: 0.8125rem; color: var(--muted); font-variant-numeric: tabular-nums; }
+.set-line .done { color: var(--primary); }
+.meal-item { display: flex; justify-content: space-between; gap: 0.75rem; font-size: 0.875rem; margin-top: 0.35rem; }
+.meal-item span:last-child { color: var(--muted); font-variant-numeric: tabular-nums; }
+.stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.65rem; }
+.stat { background: var(--surface-2); border-radius: var(--radius-sm); padding: 0.85rem 0.9rem; }
+.stat p { margin: 0; }
+.stat .lbl { font-size: 0.7rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); }
+.stat .val { margin-top: 0.3rem; font-family: var(--font-display); font-size: 1.25rem; }
+.muted { color: var(--muted); }
+.empty { color: var(--muted); font-size: 0.875rem; line-height: 1.6; }
+.lock { padding-top: 2.5rem; }
+form { display: flex; flex-direction: column; gap: 0.75rem; }
+label { display: block; font-size: 0.875rem; color: var(--muted); }
+label .field, label .pass { margin-top: 0.4rem; }
+.add { margin-top: 0.25rem; }
+.signout { font-size: 0.75rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script>
+const DAYS = [{"id":"push","name":"Push","short":"Push","rest":false},{"id":"pull","name":"Pull","short":"Pull","rest":false},{"id":"legs","name":"Legs","short":"Legs","rest":false},{"id":"rest-thu","name":"Rest","short":"Rest","rest":true},{"id":"quads","name":"Quads + chest","short":"Quads","rest":false},{"id":"back","name":"Back + hamstrings","short":"Back","rest":false},{"id":"rest-sun","name":"Rest","short":"Rest","rest":true}];
+const EX_NAMES = {"push-incline":"Incline DB press","push-flat":"Flat machine or DB press","push-fly":"High-to-low cable fly","push-shoulder":"Seated DB shoulder press","push-lat-db":"DB lateral raise","push-lat-cable":"Cable lateral raise","push-oh":"Overhead cable extension","push-down":"Rope pushdown","pull-incline":"Incline DB curl","pull-ez":"EZ-bar curl","pull-hammer":"Hammer curl","pull-down":"Pull-up or wide pulldown","pull-row":"Chest-supported row","pull-straight":"Straight-arm pulldown","pull-rear":"Rear-delt fly","pull-face":"Face pull","legs-hack":"Hack squat or high-bar squat","legs-glute":"Glute drive or hip thrust","legs-add":"Machine hip adduction","legs-ext":"Leg extension","legs-curl":"Lying leg curl","legs-calf":"Standing calf raise","legs-lat":"Lean-away or machine lateral","quads-press":"Leg press","quads-bulg":"Bulgarian split squat","quads-single":"Single-leg extension","quads-add":"Machine hip adduction","quads-pec":"Pec deck","quads-fly":"Low-to-high cable fly","quads-dip":"Chest-biased dip","quads-kick":"Cable kickback","back-rdl":"Romanian deadlift","back-seated":"Seated leg curl","back-lying":"Lying leg curl","back-down":"Neutral-grip pulldown","back-row":"One-arm row","back-curl":"Bayesian or preacher curl","back-calf":"Seated calf raise"};
+const MUSCLES = [{"id":"chest","name":"Chest"},{"id":"shoulders","name":"Shoulders"},{"id":"rear-delts","name":"Rear delts"},{"id":"triceps","name":"Triceps"},{"id":"biceps","name":"Biceps"},{"id":"back","name":"Back"},{"id":"quads","name":"Quads"},{"id":"hamstrings","name":"Hamstrings"},{"id":"glutes","name":"Glutes"},{"id":"adductors","name":"Adductors"},{"id":"calves","name":"Calves"}];
+const FOOD_NAMES = {"chicken-breast-1":"Chicken Breast","5-lean-beef-mince-2":"5% Lean Beef Mince","2-lean-turkey-mince-3":"2% Lean Turkey Mince","salmon-4":"Salmon","john-west-tuna-chunks-in-spring-water-5":"John West Tuna Chunks In Spring Water","birds-eye-haddock-fillet-6":"Birds Eye Haddock Fillet","king-prawns-7":"King Prawns","bacon-medallion-8":"Bacon Medallion","porky-lights-sausage-9":"Porky Lights Sausage","heck-chicken-sausages-10":"Heck Chicken Sausages","turkey-bacon-11":"Turkey Bacon","wiltshire-slice-ham-12":"Wiltshire Slice Ham","large-whole-egg-13":"Large Whole Egg","egg-whites-14":"Egg Whites","tinned-cannellini-beans-15":"Tinned Cannellini Beans","tinned-butter-beans-16":"Tinned Butter Beans","heinz-beans-17":"Heinz Beans","grenade-protein-bar-18":"Grenade Protein Bar","snickers-protein-flapjack-19":"Snickers Protein Flapjack","fage-total-0-yoghurt-20":"Fage Total 0% Yoghurt","whey-protein-21":"Whey Protein","soy-tempah-22":"Soy Tempah","brittish-beef-burger-23":"Brittish beef burger","sirloin-steak-24":"Sirloin Steak","cottage-cheese-25":"Cottage Cheese","wow-hydrate-drink-26":"WOW Hydrate Drink","aldi-birthday-cake-protein-bar-27":"Aldi Birthday Cake Protein Bar","richmond-chicken-sausage-28":"Richmond Chicken Sausage","lentils-29":"Lentils","myprotein-clear-whey-30":"MyProtein Clear Whey","quorn-mince-31":"Quorn Mince","porridge-oats-32":"Porridge Oats","oats-so-simple-protein-porridge-pot-33":"Oats So Simple Protein Porridge Pot","hovis-best-of-both-bread-34":"Hovis Best of Both Bread","warburtons-thin-bagels-plain-35":"Warburtons Thin Bagels (plain)","mccains-jacket-potato-36":"McCains Jacket Potato","warburtons-thin-bagels-cinnamon-raisin-37":"Warburtons Thin Bagels (cinnamon&raisin)","warburton-thins-plain-38":"Warburton Thins - Plain","wholemeal-warburtons-cob-39":"Wholemeal Warburtons Cob","kingsmill-medium-bread-50-50-40":"Kingsmill medium bread - 50/50","medium-wholemead-bread-41":"Medium Wholemead Bread","plain-tortilla-wrap-42":"Plain Tortilla Wrap","brioche-bun-43":"Brioche Bun","crumpet-44":"Crumpet","wholemeal-bread-45":"Wholemeal Bread","white-bread-46":"White Bread","sweet-potato-47":"Sweet Potato","white-potato-48":"White Potato","mccains-5-oven-chips-49":"McCains 5% Oven Chips","warburtons-sandwich-thins-50":"Warburtons Sandwich Thins","basmati-rice-microwave-51":"Basmati Rice - Microwave","weetabix-orginal-52":"Weetabix Orginal","coco-pops-53":"Coco Pops","rice-krispies-54":"Rice Krispies","frosties-55":"Frosties","pasta-dry-56":"Pasta - Dry","spaghetti-57":"Spaghetti","new-york-plain-bagel-58":"New York Plain Bagel","uncooked-white-rice-59":"Uncooked White Rice","uncooked-brown-rice-60":"Uncooked Brown Rice","new-york-cinnamon-raisin-bagel-61":"New York Cinnamon & Raisin Bagel","trainedbyjp-cream-of-rice-62":"TrainedByJP - Cream of Rice","harvest-morn-salt-vinegar-rice-cake-63":"Harvest Morn Salt & Vinegar Rice Cake","rice-crispy-square-bar-marshmallow-64":"Rice Crispy Square Bar - Marshmallow","rice-crispy-square-bar-chocolate-65":"Rice Crispy Square Bar - Chocolate","iced-gems-66":"Iced Gems","snack-a-jack-chocolate-67":"Snack A Jack - Chocolate","crunchy-nut-cornflakes-68":"Crunchy Nut Cornflakes","curly-wurly-chocolate-bar-69":"Curly Wurly Chocolate Bar","halo-top-cookie-dough-ice-cream-70":"Halo Top - Cookie Dough Ice Cream","party-ring-biscuit-71":"Party Ring Biscuit","pom-bears-crisps-72":"Pom- Bears Crisps","tesco-reduced-sugar-strawberry-jam-73":"Tesco Reduced Sugar Strawberry Jam","alpro-unsweetened-almond-milk-74":"Alpro Unsweetened Almond Milk","alpro-coconut-milk-75":"Alpro Coconut Milk","semi-skimmed-milk-76":"Semi - Skimmed Milk","highly-branched-cyclic-dextrin-77":"Highly Branched Cyclic Dextrin","air-popped-popcorn-78":"Air Popped Popcorn","fibre-one-bar-lemon-drizzle-79":"Fibre One Bar - Lemon Drizzle","fibre-one-bar-chocolate-brownie-80":"Fibre One Bar - Chocolate Brownie","lindt-extra-creamy-81":"Lindt Extra Creamy","freddo-82":"Freddo","mini-roll-cadbury-83":"Mini Roll Cadbury","nutella-spread-84":"Nutella Spread","hartleys-jelly-85":"Hartleys Jelly","medium-banana-86":"Medium Banana","apple-golden-delicious-87":"Apple Golden Delicious","raisins-88":"Raisins","pink-lady-apple-89":"Pink Lady Apple","strawberries-90":"Strawberries","blueberries-91":"Blueberries","frozen-raspberries-92":"Frozen Raspberries","frozen-blueberries-93":"Frozen Blueberries","pineapple-94":"Pineapple","watermelon-95":"Watermelon","pear-96":"Pear","avacado-97":"Avacado","spinach-98":"Spinach","pitted-cherries-99":"Pitted Cherries","asparagus-100":"Asparagus","romaine-lettuce-leaves-101":"Romaine Lettuce Leaves","peppers-102":"Peppers","peas-103":"Peas","onion-104":"Onion","chia-seeds-105":"Chia Seeds","summer-fruit-mix-frozen-106":"Summer Fruit Mix - Frozen","birds-eye-streamfresh-veg-mix-107":"Birds Eye Streamfresh Veg Mix","peanut-hottie-peanut-butter-powder-108":"Peanut Hottie Peanut Butter Powder","lindt-70-dark-chocolate-109":"Lindt 70% Dark Chocolate","cashew-nuts-110":"Cashew Nuts","lurpack-lighter-spreadable-111":"Lurpack Lighter Spreadable","quinoa-112":"Quinoa","extra-virgin-olive-oil-113":"Extra Virgin Olive Oil","walnut-oil-114":"Walnut Oil","olives-115":"Olives","utterly-butterly-116":"Utterly Butterly","medium-cheese-117":"Medium Cheese","sun-pat-smooth-peanut-butter-118":"Sun-Pat Smooth Peanut Butter","roberts-half-half-119":"Roberts Half & Half","smoked-streaky-bacon-120":"Smoked Streaky Bacon","fridge-raiders-chicken-bites-121":"Fridge Raiders - Chicken Bites","essential-amino-acids-122":"Essential Amino Acids","sourdough-bread-123":"Sourdough Bread","morrisons-skin-on-fries-124":"Morrisons Skin On Fries","applied-nutrition-iso-xp-banana-125":"Applied Nutrition - ISO XP Banana","semi-skimmed-milk-126":"Semi-Skimmed Milk","tesco-reduced-fat-pork-sausages-127":"Tesco - Reduced Fat Pork Sausages","aldi-sliced-cheddar-cheese-128":"Aldi - Sliced Cheddar Cheese","aldi-thick-cut-bacon-129":"Aldi - Thick Cut Bacon","tesco-turkey-sausages-130":"Tesco - Turkey Sausages","skyr-passionfruit-mango-papaya-131":"Skyr Passionfruit, Mango & Papaya","aldi-bbq-chicken-mini-fillets-132":"Aldi - BBQ Chicken Mini Fillets","tesco-southern-fried-chicken-mini-fillets-cooked-133":"Tesco - Southern Fried Chicken Mini Fillets - Cooked","aldi-5-burgers-134":"Aldi - 5% Burgers","aldi-skinny-meatballs-135":"Aldi - Skinny Meatballs","asda-smoky-bbq-chicken-breast-slices-136":"Asda - Smoky BBQ Chicken Breast Slices","aldi-skinny-pork-sausages-137":"Aldi - Skinny Pork Sausages","aldi-breaded-chicken-goujons-cooked-138":"Aldi - Breaded Chicken Goujons - Cooked","reduced-fat-bacon-medallions-139":"Reduced Fat Bacon Medallions","merevale-medium-free-range-egg-140":"Merevale - Medium Free Range Egg","trained-by-jp-iso-white-choc-raspberry-141":"Trained by JP - ISO White Choc Raspberry","fage-0-greek-yoghurt-142":"Fage 0% Greek Yoghurt","mature-british-cheddar-cheese-143":"Mature British Cheddar Cheese","trained-by-jp-iso-choc-mint-144":"Trained by JP - ISO Choc Mint","aldi-buttermilk-fish-burgers-145":"Aldi - Buttermilk Fish Burgers","morrisons-rump-steak-146":"Morrisons - Rump Steak","skyr-natural-yoghurt-147":"Skyr Natural Yoghurt","morrisons-british-beef-meatballs-148":"Morrisons - British Beef Meatballs","asda-chicken-breast-fillet-portions-149":"ASDA - Chicken Breast Fillet Portions","morrisons-southern-fried-chicken-goujons-150":"Morrisons - Southern Fried Chicken Goujons","asda-turkey-burgers-151":"ASDA - Turkey Burgers","tesco-reduced-fat-british-beef-burger-152":"Tesco - Reduced Fat British Beef Burger","tesco-5-fat-steak-mince-153":"Tesco - 5% Fat Steak Mince","tesco-large-free-range-egg-154":"Tesco - Large Free Range Egg","tesco-fish-fingers-155":"Tesco - Fish Fingers","tesco-chicken-sausages-156":"Tesco - Chicken Sausages","asda-breaded-cod-fillets-157":"ASDA - Breaded Cod Fillets","tesco-bbq-chicken-breast-pieces-158":"Tesco - BBQ Chicken Breast Pieces","asda-light-lean-sausages-159":"ASDA - Light & Lean Sausages","tesco-finest-quarter-piunder-beef-burger-160":"Tesco - Finest Quarter Piunder Beef Burger","asda-medium-free-range-egg-161":"ASDA - Medium Free Range Egg","asda-cajun-chicken-breast-slices-162":"ASDA - Cajun Chicken Breast Slices","grenade-carb-killa-cookie-dough-163":"Grenade Carb Killa - Cookie Dough","aldi-southern-fried-fish-burger-164":"Aldi - Southern Fried Fish Burger","m-s-sliced-bbq-chicken-165":"M&S - Sliced BBQ Chicken","aldi-chicken-breast-mini-fillets-166":"Aldi - Chicken Breast Mini Fillets","m-s-sweet-smoky-chicken-167":"M&S - Sweet & Smoky Chicken","m-s-buttermilk-chicken-tenders-168":"M&S - Buttermilk Chicken Tenders","heck-chicken-italia-sausages-169":"Heck Chicken Italia Sausages","tesco-eastman-s-chicken-tikka-170":"Tesco - Eastman's Chicken Tikka","m-s-skinny-pork-sausages-171":"M&S - Skinny Pork Sausages","aldi-mexican-style-chicken-slices-172":"Aldi - Mexican Style Chicken Slices","m-s-skinny-beef-burgers-173":"M&S - Skinny Beef Burgers","m-s-aberdeen-angus-ribeye-174":"M&S - Aberdeen Angus Ribeye","myprotein-clear-whey-protein-175":"MyProtein - Clear Whey Protein","pork-steak-176":"Pork Steak","lindahls-kvarg-177":"Lindahls Kvarg","asda-3-fat-turkey-breast-steaks-178":"ASDA - <3% Fat Turkey Breast Steaks","m-s-king-prawns-179":"M&S - King Prawns","tuna-chunks-drained-180":"Tuna Chunks - Drained","mattessons-fridge-raiders-181":"Mattessons - Fridge Raiders","heck-chicken-burger-182":"Heck Chicken Burger","grenade-carb-killa-protein-spread-183":"Grenade Carb Killa - Protein Spread","eat-lean-protein-cheese-hard-184":"Eat Lean - Protein Cheese (Hard)","mattessons-turkey-bacon-185":"Mattessons - Turkey Bacon","salmon-fillet-186":"Salmon Fillet","smoked-salmon-187":"Smoked Salmon","steak-rump-188":"Steak - Rump","steak-sirloin-189":"Steak - Sirloin","steak-fillet-190":"Steak - Fillet","maximuscle-protein-191":"Maximuscle protein","per4m-protein-192":"Per4m Protein","coco-pops-white-choc-193":"Coco Pops - White Choc","tesco-micro-pilau-194":"Tesco - Micro Pilau","reduced-fat-garlic-bread-195":"Reduced Fat Garlic Bread","trained-by-jp-sustain-intra-196":"Trained by JP - Sustain Intra","aldi-luxury-brioche-bun-197":"Aldi - Luxury Brioche Bun","warburton-s-thin-bagel-198":"Warburton's Thin Bagel","aldi-giant-buttermilk-pancake-199":"Aldi - Giant Buttermilk Pancake","warburton-s-potato-cakes-200":"Warburton's - Potato Cakes","aldi-micro-pilau-201":"Aldi - Micro Pilau","aldi-sourdough-crumpet-202":"Aldi - Sourdough Crumpet","rice-krispies-203":"Rice Krispies","supplement-needs-intra-carb-204":"Supplement Needs - Intra Carb","aldi-micro-basmati-205":"Aldi - Micro Basmati","coco-pops-206":"Coco Pops","aldi-straight-cut-chips-207":"Aldi - Straight Cut Chips","asda-micro-basmati-208":"ASDA - Micro Basmati","monster-energy-pipeline-punch-209":"Monster Energy - Pipeline Punch","tesco-jasmine-rice-210":"Tesco - Jasmine Rice","asda-mini-naan-bread-211":"ASDA - Mini Naan Bread","aldi-vegan-brioche-bun-212":"Aldi - Vegan Brioche Bun","rice-krispies-squares-choc-caramel-213":"Rice Krispies Squares - Choc Caramel","asda-wholewheat-spaghetti-cooked-214":"ASDA - Wholewheat Spaghetti - Cooked","warburton-s-crumpets-215":"Warburton's - Crumpets","warburton-s-plain-bagel-216":"Warburton's - Plain Bagel","tesco-basmati-rice-uncooked-217":"Tesco - Basmati Rice - Uncooked","tilda-lime-coriander-218":"Tilda - Lime & Coriander","asda-sliced-brioche-bun-219":"ASDA - Sliced Brioche Bun","tilda-sweet-chilli-lime-220":"Tilda - Sweet Chilli & Lime","tilda-lemon-herb-221":"Tilda - Lemon & Herb","mccains-lighter-home-chips-222":"McCains Lighter Home Chips","asda-maple-syrup-pancakes-223":"ASDA - Maple Syrup Pancakes","tilda-coconut-chilli-lemongrass-224":"Tilda - Coconut Chilli & Lemongrass","warburton-s-sliced-soft-white-roll-225":"Warburton's - Sliced Soft White Roll","tilda-tomato-basil-226":"Tilda - Tomato & Basil","tesco-linguine-227":"Tesco - Linguine","trained-by-jp-cor-vanilla-228":"Trained by JP - COR Vanilla","mccains-chunky-home-chips-229":"McCains Chunky Home Chips","asda-ww-plain-wraps-230":"ASDA - WW Plain Wraps","kingsmill-50-50-231":"Kingsmill - 50/50","tesco-brioche-burger-bun-232":"Tesco - Brioche Burger Bun","heinz-no-added-sugar-beans-snap-pot-233":"Heinz - No Added Sugar Beans Snap Pot","tesco-large-buttermilk-pancake-234":"Tesco - Large Buttermilk Pancake","sharwoods-garlic-coriander-mini-naan-235":"Sharwoods - Garlic & Coriander Mini Naan","trained-by-jp-mps-max-236":"Trained by JP - MPS Max","m-s-percy-pigs-237":"M&S - Percy Pigs","warburton-s-sliced-brioche-burger-buns-238":"Warburton's - Sliced Brioche Burger Buns","asda-straight-cut-chips-3-fat-239":"ASDA - Straight Cut Chips (3% Fat)","m-s-brioche-bun-240":"M&S - Brioche Bun","tilda-basmati-rice-241":"Tilda - Basmati Rice","m-s-micro-basmati-242":"M&S - Micro Basmati","tesco-finest-chocolate-orange-cookie-243":"Tesco - Finest Chocolate Orange Cookie","rice-krispies-squares-choc-orange-244":"Rice Krispies Squares - Choc Orange","m-s-chunky-chips-245":"M&S - Chunky Chips","asda-cheesy-mash-246":"ASDA - Cheesy Mash","asda-frozen-hash-browns-247":"ASDA - Frozen Hash Browns","soreen-malt-loaf-248":"Soreen (Malt Loaf)","trek-flapjack-bar-249":"Trek - Flapjack Bar","weetabix-250":"Weetabix","weetabix-minis-chocolate-chip-251":"Weetabix Minis - Chocolate Chip","alpen-light-chocolate-fudge-252":"Alpen Light - Chocolate & Fudge","snack-a-jacks-salt-vinegar-253":"Snack A Jacks - Salt & Vinegar","fibre-one-bar-254":"Fibre One Bar","hula-hoops-255":"Hula Hoops","kelloggs-frosties-256":"Kelloggs Frosties","kelloggs-corn-flakes-257":"Kelloggs Corn Flakes","cream-of-rice-258":"Cream of rice","quaker-rolled-oats-259":"Quaker Rolled oats","aldi-nordpak-lighter-260":"Aldi - Nordpak Lighter","aldi-moser-roth-salted-caramel-261":"Aldi - Moser Roth Salted Caramel","aldi-moser-roth-85-262":"Aldi - Moser Roth 85%","lindt-salted-caramel-dark-263":"Lindt - Salted Caramel Dark","lotus-biscoff-crunchy-spread-264":"Lotus Biscoff Crunchy Spread","lindt-85-dark-chocolate-265":"Lindt - 85% Dark Chocolate","aldi-halloumi-266":"Aldi - Halloumi","m-s-chilli-halloumi-kebabs-267":"M&S - Chilli Halloumi Kebabs","reduced-fat-cheddar-268":"Reduced Fat Cheddar","morrisons-avocado-smash-269":"Morrisons - Avocado Smash","asda-houmous-270":"ASDA - Houmous","peperami-271":"Peperami","philadelphia-light-272":"Philadelphia Light","hellmans-mayonnaise-273":"Hellmans Mayonnaise","banana-274":"Banana","strawberries-275":"Strawberries","raspberries-276":"Raspberries","blueberries-277":"Blueberries","pineapple-278":"Pineapple","mango-279":"Mango","watermelon-280":"Watermelon","apple-pink-lady-281":"Apple - Pink Lady","orange-282":"Orange","apple-gala-283":"Apple - Gala","apple-granny-smith-284":"Apple - Granny Smith","lime-285":"Lime","pear-286":"Pear","grapes-red-287":"Grapes - Red","grapes-green-288":"Grapes - Green","clementine-289":"Clementine","satsuma-290":"Satsuma","honeydew-melon-291":"Honeydew Melon","red-grapefruit-292":"Red Grapefruit","nectarine-293":"Nectarine","peach-294":"Peach","plum-295":"Plum","kiwi-296":"Kiwi","cantaloupe-melon-297":"Cantaloupe Melon","passion-fruit-298":"Passion Fruit","pomegranate-299":"Pomegranate","tesco-grape-strawberries-pot-300":"Tesco - Grape & Strawberries Pot","m-s-organic-blueberries-301":"M&S - Organic Blueberries","m-s-berry-medley-302":"M&S - Berry Medley","apricots-303":"Apricots","cherries-304":"Cherries","tesco-berry-medley-305":"Tesco - Berry Medley","blackberries-306":"Blackberries","courgettes-307":"Courgettes","mushrooms-chestnut-308":"Mushrooms - Chestnut","asparagus-309":"Asparagus","carrots-310":"Carrots","onion-red-311":"Onion - Red","onion-brown-312":"Onion - Brown","sweetcorn-cobettes-313":"Sweetcorn Cobettes","mushrooms-baby-button-314":"Mushrooms - Baby Button","broccoli-315":"Broccoli","cauliflower-316":"Cauliflower","leek-317":"Leek","baby-spinach-318":"Baby Spinach","aubergine-319":"Aubergine","green-beans-320":"Green Beans","mushrooms-closed-cup-321":"Mushrooms - Closed Cup","cabbage-white-322":"Cabbage - White","garlic-323":"Garlic","ginger-324":"Ginger","baby-corn-325":"Baby Corn","beansprouts-326":"Beansprouts","chilli-327":"Chilli","curly-kale-328":"Curly Kale","mangetout-329":"Mangetout","sugar-snap-peas-330":"Sugar Snap Peas","cabbage-savoy-331":"Cabbage - Savoy","parnsips-332":"Parnsips","pak-choi-333":"Pak Choi","monster-energy-the-doctor-334":"Monster Energy - The Doctor","monster-energy-pipeline-punch-335":"Monster Energy - Pipeline Punch","monster-energy-ripper-336":"Monster Energy - Ripper","monster-energy-original-337":"Monster Energy - Original","monster-energy-mixxd-punch-338":"Monster Energy - Mixxd Punch","monster-energy-juiced-mango-loco-339":"Monster Energy - Juiced Mango Loco","monster-energy-pacific-punch-340":"Monster Energy - Pacific Punch","tango-orange-341":"Tango - Orange","irn-bru-342":"Irn-Bru","dr-pepper-343":"Dr Pepper","sprite-344":"Sprite","fruit-shoot-apple-blackcurrant-345":"Fruit Shoot - Apple & Blackcurrant","vimto-sparkling-346":"Vimto - Sparkling","up-light-347":"Up Light","vimto-no-added-sugar-348":"Vimto - No Added Sugar","rubicon-sparkling-mango-349":"Rubicon Sparkling - Mango","lilt-350":"Lilt","ting-351":"Ting","sunny-delight-orange-352":"Sunny Delight Orange","san-pellegrino-limonata-353":"San Pellegrino - Limonata","san-pellegrino-aranciata-354":"San Pellegrino - Aranciata","fresh-orange-juice-355":"Fresh Orange Juice","fresh-apple-juice-356":"Fresh Apple Juice","fresh-cranberry-juice-357":"Fresh Cranberry Juice","rubicon-still-mango-358":"Rubicon Still - Mango","fresh-apple-raspberry-juice-359":"Fresh Apple & Raspberry Juice","fresh-blueberry-juice-360":"Fresh Blueberry Juice","fresh-tropical-juice-361":"Fresh Tropical Juice","oat-ly-oat-milk-362":"Oat-Ly Oat Milk","yakult-363":"Yakult","alpro-unsweetened-almond-milk-364":"Alpro Unsweetened Almond Milk","fanta-fruit-twist-365":"Fanta - Fruit Twist","yakult-light-366":"Yakult - Light","actimel-strawberry-367":"Actimel - Strawberry","alpro-soya-milk-368":"Alpro Soya Milk","fanta-orange-zero-369":"Fanta - Orange Zero","ribena-sparkling-370":"Ribena - Sparkling","ribena-rtd-blackcurrant-371":"Ribena - RTD Blackcurrant","fresh-pomegranate-juice-372":"Fresh Pomegranate Juice","coca-cola-373":"Coca Cola","diet-coke-374":"Diet Coke","coke-zero-375":"Coke Zero","skimmed-milk-376":"Skimmed Milk","semi-skimmed-milk-377":"Semi-Skimmed Milk","whole-milk-378":"Whole Milk","options-hot-chocolate-379":"Options Hot Chocolate","tea-380":"Tea","black-americano-381":"Black Americano","white-americano-382":"White Americano","latte-regular-383":"Latte (Regular)","cappuccino-regular-384":"Cappuccino (Regular)","flat-white-385":"Flat White","coconut-milk-386":"Coconut Milk","vodka-387":"Vodka","gin-388":"Gin","tonic-water-slimline-389":"Tonic Water - Slimline","white-wine-small-glass-390":"White Wine (Small Glass)","white-wine-large-glass-391":"White Wine (Large Glass)","red-wine-small-glass-392":"Red Wine (Small Glass)","red-wine-large-glass-393":"Red Wine (Large Glass)","tonic-water-394":"Tonic Water","beer-standard-395":"Beer (Standard)","cider-standard-396":"Cider (Standard)","aioli-397":"Aioli","redcurrant-jelly-398":"Redcurrant Jelly","cholula-hot-sauce-399":"Cholula Hot Sauce","lea-perrins-worcestershire-sauce-400":"Lea & Perrins Worcestershire Sauce","hollandaise-sauce-401":"Hollandaise Sauce","bearnaise-sauce-402":"Bearnaise Sauce","tartare-sauce-403":"Tartare Sauce","mint-sauce-404":"Mint Sauce","peppercorn-sauce-405":"Peppercorn Sauce","apple-sauce-406":"Apple Sauce","seafood-sauce-407":"Seafood Sauce","cranberry-sauce-408":"Cranberry Sauce","garlic-sauce-409":"Garlic Sauce","nando-s-peri-peri-rub-410":"Nando's - Peri-Peri Rub","nando-s-medium-sauce-411":"Nando's - Medium Sauce","nando-s-squeezy-perinaise-412":"Nando's - Squeezy Perinaise","nando-s-hot-sauce-413":"Nando's - Hot Sauce","nando-s-lemon-herb-sauce-414":"Nando's - Lemon & Herb Sauce","nando-s-garlic-sauce-415":"Nando's - Garlic Sauce","nando-s-hot-perinaise-416":"Nando's - Hot Perinaise","nando-s-mango-lime-marinade-417":"Nando's - Mango & Lime Marinade","nando-s-peri-peri-vusa-418":"Nando's - Peri-Peri Vusa","nando-s-extra-extra-hot-sauce-419":"Nando's - Extra Extra Hot Sauce","nando-s-garlic-perinaise-420":"Nando's - Garlic Perinaise","blue-dragon-sweet-chilli-sauce-421":"Blue Dragon - Sweet Chilli Sauce","loyd-grossman-tomato-pasta-sauce-422":"Loyd Grossman - Tomato Pasta Sauce","hp-brown-sauce-423":"HP Brown Sauce","heinz-bbq-sauce-424":"Heinz BBQ Sauce","blue-dragon-hoisin-sauce-425":"Blue Dragon - Hoisin Sauce","pataks-medium-balti-cooking-sauce-426":"Pataks Medium Balti Cooking Sauce","pataks-tikka-masala-cooking-sauce-427":"Pataks Tikka Masala Cooking Sauce","hellmann-s-garlic-herb-sauce-428":"Hellmann's Garlic & Herb Sauce","askeys-toffee-sauce-429":"Askeys Toffee Sauce","uncle-ben-s-sweet-sour-430":"Uncle Ben's Sweet & Sour","heinz-burger-sauce-431":"Heinz Burger Sauce","heinz-tomato-ketchup-432":"Heinz Tomato Ketchup","heinz-tomato-ketchup-50-less-sugar-433":"Heinz Tomato Ketchup - 50% Less Sugar","mayflower-curry-sauce-434":"Mayflower - Curry Sauce","heinz-no-added-sugar-beans-snap-pot-435":"Heinz - No Added Sugar Beans Snap Pot","m-s-golden-syrup-436":"M&S - Golden Syrup","sharwoods-30-tikka-masala-sauce-437":"Sharwoods - 30% Tikka Masala Sauce","non-starch-vegetables-of-choice-438":"Non-Starch Vegetables of Choice","almond-butter-439":"Almond Butter","dates-440":"Dates","coco-pops-snack-bar-441":"Coco Pops Snack Bar","low-fat-cereal-of-choice-442":"Low Fat Cereal of Choice","beetroot-443":"Beetroot","salt-444":"Salt","honey-445":"honey","coconut-oil-446":"coconut oil","granola-447":"granola","jam-448":"Jam"};
+
+
+const TRACKER_ORIGIN = "https://maxfriess.github.io/block-tracker/";
+const SB_URL = "https://mflafztrootwmnfobmrc.supabase.co";
+const SB_ANON = "sb_publishable_FzWfw5Z0kCfyAnM7RQ2lAQ_-el6KFzO";
+const PASS_KEY = "block-coach-pass";
+const MONTHS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+const DOW = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+
+function esc(v) {
+  return String(v ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/"/g, "&quot;");
+}
+
+function getPass() {
+  try { return sessionStorage.getItem(PASS_KEY) || ""; }
+  catch (err) { return ""; }
+}
+function setPass(p) {
+  try {
+    if (p) sessionStorage.setItem(PASS_KEY, p);
+    else sessionStorage.removeItem(PASS_KEY);
+  } catch (err) {}
+}
+
+async function rpc(name, body) {
+  const res = await fetch(SB_URL + "/rest/v1/rpc/" + name, {
+    method: "POST",
+    headers: {
+      apikey: SB_ANON,
+      Authorization: "Bearer " + SB_ANON,
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify(body)
+  });
+  const text = await res.text();
+  let data = null;
+  if (text) {
+    try { data = JSON.parse(text); }
+    catch (err) { data = text; }
+  }
+  if (!res.ok) {
+    const msg = (data && (data.message || data.error || data.hint)) || text || ("HTTP " + res.status);
+    const err = new Error(typeof msg === "string" ? msg : "Request failed");
+    err.status = res.status;
+    err.data = data;
+    err.notAllowed = /not allowed/i.test(String(msg));
+    throw err;
+  }
+  return data;
+}
+
+function isNotAllowed(err) {
+  return !!(err && (err.notAllowed || /not allowed/i.test(err.message || "")));
+}
+
+function clientLink(token) {
+  return TRACKER_ORIGIN + "?c=" + encodeURIComponent(token);
+}
+
+function dayName(id) {
+  return (DAYS.find((d) => d.id === id) || {}).name || id;
+}
+
+function exerciseName(id, state) {
+  const plans = state && state.plans ? state.plans : {};
+  for (const list of Object.values(plans)) {
+    if (!Array.isArray(list)) continue;
+    const hit = list.find((e) => e.id === id);
+    if (hit && hit.name) return hit.name;
+  }
+  const lib = state && state.library && state.library[id];
+  if (lib && lib.name) return lib.name;
+  return EX_NAMES[id] || id;
+}
+
+function foodName(id, state) {
+  const custom = (state && state.customFoods) || [];
+  const hit = custom.find((f) => f.id === id);
+  if (hit && hit.name) return hit.name;
+  return FOOD_NAMES[id] || id;
+}
+
+function muscleName(id) {
+  return (MUSCLES.find((m) => m.id === id) || {}).name || id;
+}
+
+function parseNum(v) {
+  const t = String(v ?? "").trim().replace(",", ".");
+  if (!t) return null;
+  const n = Number(t);
+  return Number.isFinite(n) ? n : null;
+}
+
+function fmtEEE(s) {
+  if (!s || !/^\d{4}-\d{2}-\d{2}$/.test(s)) return s || "";
+  const [y, m, d] = s.split("-").map(Number);
+  const dt = new Date(y, m - 1, d);
+  return DOW[dt.getDay()] + " " + d + " " + MONTHS[dt.getMonth()];
+}
+
+function fmtWhen(value) {
+  if (value == null || value === "") return "Never synced";
+  let d;
+  if (typeof value === "number") d = new Date(value);
+  else d = new Date(value);
+  if (Number.isNaN(d.getTime())) return "Never synced";
+  return d.toLocaleString("en-GB", {
+    timeZone: "Europe/London",
+    weekday: "short",
+    day: "numeric",
+    month: "short",
+    hour: "2-digit",
+    minute: "2-digit"
+  });
+}
+
+function isLogged(session) {
+  if (!session) return false;
+  if (session.finished) return true;
+  return Object.values(session.sets || {}).some((sets) =>
+    (sets || []).some((e) => e.done || String(e.weight || "").trim() || String(e.reps || "").trim())
+  );
+}
+
+function sessionVolume(session) {
+  let t = 0;
+  for (const sets of Object.values(session.sets || {})) {
+    for (const e of sets || []) {
+      if (!e.done) continue;
+      const w = parseNum(e.weight), r = parseNum(e.reps);
+      if (w != null && r != null) t += w * r;
+    }
+  }
+  return t;
+}
+
+function bestSet(entries) {
+  let best = null;
+  for (const e of entries || []) {
+    const w = parseNum(e.weight);
+    const r = parseNum(e.reps);
+    if (w == null || w <= 0) continue;
+    if (!best || w > best.weight || (w === best.weight && (r ?? 0) > best.reps)) {
+      best = { weight: w, reps: r ?? 0 };
+    }
+  }
+  return best;
+}
+
+function liftSummaries(state) {
+  const sessions = ((state && state.sessions) || []).filter(isLogged);
+  const byEx = new Map();
+  for (const s of sessions) {
+    for (const [id, sets] of Object.entries(s.sets || {})) {
+      const best = bestSet(sets);
+      if (!best) continue;
+      const prev = byEx.get(id);
+      if (!prev || best.weight > prev.weight || (best.weight === prev.weight && best.reps > prev.reps)) {
+        byEx.set(id, { id, weight: best.weight, reps: best.reps, date: s.date, unit: s.unit || state.unit || "kg" });
+      }
+    }
+  }
+  return [...byEx.values()].sort((a, b) => b.weight - a.weight);
+}
+
+function volumeByMuscle(state) {
+  const plans = (state && state.plans) || {};
+  const map = new Map(MUSCLES.map((m) => [m.id, 0]));
+  const dayIds = DAYS.filter((d) => !d.rest).map((d) => d.id);
+  for (const dayId of dayIds) {
+    const list = plans[dayId];
+    if (!Array.isArray(list)) continue;
+    for (const ex of list) {
+      for (const m of ex.muscles || []) {
+        if (map.has(m)) map.set(m, map.get(m) + (Number(ex.sets) || 0));
+      }
+    }
+  }
+  return MUSCLES.map((m) => ({ id: m.id, name: m.name, sets: map.get(m.id) || 0 })).filter((r) => r.sets > 0);
+}
+
+let ui = {
+  view: "gate",
+  pass: getPass(),
+  passInput: "",
+  clients: [],
+  selected: null,
+  state: null,
+  error: "",
+  busy: false,
+  newName: "",
+  justAdded: null,
+  copied: "",
+  confirmDelete: false
+};
+
+function showError(err, fallback) {
+  if (isNotAllowed(err)) {
+    ui.pass = "";
+    ui.passInput = "";
+    setPass("");
+    ui.view = "gate";
+    ui.error = "That passcode isn’t right. Try again.";
+    ui.selected = null;
+    ui.state = null;
+    return;
+  }
+  ui.error = (err && err.message) || fallback || "Something went wrong. Try again.";
+}
+
+async function loadList() {
+  ui.busy = true;
+  ui.error = "";
+  render();
+  try {
+    const rows = await rpc("coach_list", { p_pass: ui.pass });
+    ui.clients = Array.isArray(rows) ? rows : [];
+    ui.view = "list";
+  } catch (err) {
+    showError(err, "Could not load clients.");
+  } finally {
+    ui.busy = false;
+    render();
+  }
+}
+
+async function addClient(name) {
+  const n = String(name || "").trim();
+  if (!n) return;
+  ui.busy = true;
+  ui.error = "";
+  render();
+  try {
+    const token = await rpc("coach_add_client", { p_pass: ui.pass, p_name: n });
+    const t = String(token || "").replace(/^"|"$/g, "");
+    if (!t) throw new Error("No link was returned.");
+    const link = clientLink(t);
+    ui.justAdded = { name: n, token: t, link };
+    ui.newName = "";
+    ui.copied = (await copyToClipboard(link)) ? "new" : "";
+    await loadList();
+  } catch (err) {
+    showError(err, "Could not add that client.");
+    ui.busy = false;
+    render();
+  }
+}
+
+async function openClient(client) {
+  ui.busy = true;
+  ui.error = "";
+  ui.confirmDelete = false;
+  ui.selected = client;
+  ui.state = null;
+  ui.view = "detail";
+  render();
+  try {
+    const raw = await rpc("coach_get", { p_pass: ui.pass, p_client: client.id });
+    ui.state = raw && typeof raw === "object" ? raw : null;
+  } catch (err) {
+    showError(err, "Could not load this client.");
+  } finally {
+    ui.busy = false;
+    render();
+  }
+}
+
+async function deleteClient() {
+  if (!ui.selected) return;
+  ui.busy = true;
+  ui.error = "";
+  render();
+  try {
+    await rpc("coach_delete_client", { p_pass: ui.pass, p_client: ui.selected.id });
+    ui.selected = null;
+    ui.state = null;
+    ui.confirmDelete = false;
+    await loadList();
+  } catch (err) {
+    showError(err, "Could not delete this client.");
+    ui.busy = false;
+    render();
+  }
+}
+
+async function copyToClipboard(text) {
+  try {
+    await Promise.race([
+      navigator.clipboard.writeText(text),
+      new Promise((_, reject) => setTimeout(() => reject(new Error("clipboard timeout")), 1200))
+    ]);
+    return true;
+  } catch (err) {
+    return false;
+  }
+}
+
+async function copyLink(token, id) {
+  const link = clientLink(token);
+  const ok = await copyToClipboard(link);
+  ui.copied = id;
+  if (!ok) ui.justAdded = { name: "Link", token, link };
+  render();
+  setTimeout(() => { if (ui.copied === id) { ui.copied = ""; render(); } }, 1600);
+}
+
+function renderHeader(sub, back) {
+  return `<header class="header">
+    <div>
+      <p class="brand-kicker">Block</p>
+      <div class="brand-rule"></div>
+      <p class="brand-sub">${esc(sub)}</p>
+    </div>
+    ${back
+      ? `<button type="button" class="text-btn" data-act="back">Clients</button>`
+      : (ui.view !== "gate" ? `<button type="button" class="text-btn signout" data-act="lock">Lock</button>` : "")}
+  </header>`;
+}
+
+function renderGate() {
+  return `${renderHeader("Coach")}
+    <main class="lock">
+      <div class="stack-lg">
+        <div>
+          <h1 class="page-title">Coach</h1>
+          <p class="lede">Enter your passcode to see your clients. It stays on this phone until you close the tab.</p>
+        </div>
+        ${ui.error ? `<p class="err" role="alert">${esc(ui.error)}</p>` : ""}
+        <form data-act="unlock" class="stack">
+          <label>Passcode
+            <input class="pass" type="password" name="pass" autocomplete="current-password" value="${esc(ui.passInput)}" data-keep="pass" ${ui.busy ? "disabled" : ""}>
+          </label>
+          <button class="btn-primary" type="submit" ${ui.busy ? "disabled" : ""}>${ui.busy ? "Checking…" : "Open coach view"}</button>
+        </form>
+      </div>
+    </main>`;
+}
+
+function renderList() {
+  const rows = ui.clients.map((c) => {
+    const when = c.updated_at ? fmtWhen(c.updated_at) : "No data yet";
+    const copied = ui.copied === c.id;
+    return `<section class="card">
+      <div class="row">
+        <button type="button" class="row-main" data-act="open" data-id="${esc(c.id)}">
+          <h3>${esc(c.name)}</h3>
+          <p>Last updated ${esc(when)}</p>
+        </button>
+        <button type="button" class="mini${copied ? " copied" : ""}" data-act="copy" data-token="${esc(c.token)}" data-id="${esc(c.id)}">${copied ? "Copied" : "Copy link"}</button>
+      </div>
+    </section>`;
+  }).join("");
+
+  const added = ui.justAdded ? `<p class="ok">Link for ${esc(ui.justAdded.name)} is ready${ui.copied === "new" ? " and copied" : ""}.
+    <span class="link-box">${esc(ui.justAdded.link)}</span></p>` : "";
+
+  return `${renderHeader("Coach")}
+    <main>
+      <div class="stack-lg">
+        <div>
+          <h1 class="page-title">Clients</h1>
+          <p class="lede">Send each person their private link. Their sessions, check-ins and meals will show up here.</p>
+        </div>
+        ${ui.error ? `<p class="err" role="alert">${esc(ui.error)}</p>` : ""}
+        ${added}
+        <form data-act="add" class="add stack">
+          <label>Add a client
+            <input class="field" name="name" placeholder="Name" value="${esc(ui.newName)}" data-keep="name" ${ui.busy ? "disabled" : ""}>
+          </label>
+          <button class="btn-primary" type="submit" ${ui.busy || !ui.newName.trim() ? "disabled" : ""}>Create link</button>
+        </form>
+        <div class="stack">
+          ${rows || `<p class="empty">No clients yet. Add a name to create a private link.</p>`}
+        </div>
+      </div>
+    </main>`;
+}
+
+function setLines(sets, unit) {
+  return (sets || []).map((e, i) => {
+    const w = String(e.weight || "").trim();
+    const r = String(e.reps || "").trim();
+    const bits = [];
+    if (w) bits.push(w + (unit ? " " + unit : ""));
+    if (r) bits.push(r + " reps");
+    const body = bits.length ? bits.join(" × ") : "—";
+    return `<p class="set-line"><span class="${e.done ? "done" : ""}">Set ${i + 1}: ${esc(body)}${e.done ? " ✓" : ""}</span></p>`;
+  }).join("");
+}
+
+function renderSessions(state) {
+  const sessions = ((state && state.sessions) || []).filter(isLogged)
+    .slice()
+    .sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : (b.updatedAt || 0) - (a.updatedAt || 0)))
+    .slice(0, 12);
+  if (!sessions.length) return `<p class="empty">No sessions logged yet.</p>`;
+  return sessions.map((s) => {
+    const unit = s.unit || state.unit || "kg";
+    const vol = sessionVolume(s);
+    const ids = Object.keys(s.sets || {});
+    const planIds = ((state.plans || {})[s.dayId] || []).map((e) => e.id);
+    const order = [...planIds.filter((id) => ids.includes(id)), ...ids.filter((id) => !planIds.includes(id))];
+    const body = order.map((id) => {
+      const sets = s.sets[id] || [];
+      if (!sets.some((e) => e.done || String(e.weight || "").trim() || String(e.reps || "").trim())) return "";
+      return `<li><p class="ex-l">${esc(exerciseName(id, state))}</p>${setLines(sets, unit)}</li>`;
+    }).join("");
+    return `<section class="card">
+      <div class="row">
+        <div class="row-main">
+          <h3>${esc(dayName(s.dayId))}</h3>
+          <p>${esc(fmtEEE(s.date))}${s.finished ? " · Finished" : ""}</p>
+        </div>
+        <div>
+          <p class="kicker">Volume</p>
+          <p style="margin:.2rem 0 0;font-family:var(--font-display);font-size:1.35rem;color:var(--primary);font-variant-numeric:tabular-nums">${esc(vol ? String(Math.round(vol)) : "—")}</p>
+        </div>
+      </div>
+      <ul class="stack" style="margin:.85rem 0 0;padding:0;list-style:none">${body}</ul>
+    </section>`;
+  }).join("");
+}
+
+function renderLifts(state) {
+  const lifts = liftSummaries(state).slice(0, 12);
+  const vol = volumeByMuscle(state);
+  const liftBlock = lifts.length
+    ? `<div class="stack">${lifts.map((l) => `<div class="row"><div class="row-main"><h3 style="font-size:1.15rem">${esc(exerciseName(l.id, state))}</h3><p>${esc(fmtEEE(l.date))}</p></div><p style="margin:0;font-family:var(--font-display);font-size:1.25rem;color:var(--primary);font-variant-numeric:tabular-nums">${esc(l.weight)} ${esc(l.unit)} × ${esc(l.reps)}</p></div>`).join("")}</div>`
+    : `<p class="empty">No lift history yet.</p>`;
+  const volBlock = vol.length
+    ? `<div class="stat-grid" style="margin-top:1rem">${vol.map((r) => `<div class="stat"><p class="lbl">${esc(r.name)}</p><p class="val">${esc(r.sets)} <span style="font-size:.8rem;color:var(--muted)">sets</span></p></div>`).join("")}</div>`
+    : "";
+  return `<section class="card">${liftBlock}${volBlock}</section>`;
+}
+
+function renderCheckIns(state) {
+  const weights = (state && state.weights) || {};
+  const checkIns = (state && state.checkIns) || {};
+  const dates = [...new Set([...Object.keys(weights), ...Object.keys(checkIns)])]
+    .filter((d) => /^\d{4}-\d{2}-\d{2}$/.test(d))
+    .sort((a, b) => a < b ? 1 : -1)
+    .slice(0, 14);
+  if (!dates.length) return `<p class="empty">No check-ins yet.</p>`;
+  const unit = (state && state.unit) || "kg";
+  return `<section class="card"><div class="stack">${dates.map((d) => {
+    const ci = checkIns[d] || {};
+    const bits = [];
+    if (weights[d]) bits.push(weights[d] + " " + unit);
+    if (ci.steps) bits.push(ci.steps + " steps");
+    if (ci.sleep) bits.push(ci.sleep + " h sleep");
+    if (ci.recovery) bits.push("recovery " + ci.recovery);
+    return `<div class="row"><div class="row-main"><h3 style="font-size:1.15rem">${esc(fmtEEE(d))}</h3><p>${esc(bits.join(" · ") || "—")}</p></div></div>`;
+  }).join("")}</div></section>`;
+}
+
+function renderMeals(state) {
+  const meals = (state && state.meals) || [];
+  const has = meals.some((m) => (m.items && m.items.length) || (m.name && !/^Meal \d+$/.test(m.name)));
+  if (!has) return `<p class="empty">No meals logged yet. This is their current meal list, not a history.</p>`;
+  return meals.map((m, i) => {
+    const items = (m.items || []).map((it) => `<div class="meal-item"><span>${esc(foodName(it.foodId, state))}</span><span>${esc(it.grams)} g</span></div>`).join("");
+    return `<section class="card"><p class="kicker">Meal ${i + 1}</p><h3 style="margin:.25rem 0 0;font-family:var(--font-display);font-size:1.35rem">${esc(m.name || "Meal")}</h3>${items || `<p class="empty" style="margin-top:.5rem">Empty</p>`}</section>`;
+  }).join("");
+}
+
+function renderDetail() {
+  const c = ui.selected || { name: "Client" };
+  const state = ui.state;
+  const last = (state && state.updatedAt) ? fmtWhen(state.updatedAt) : (c.updated_at ? fmtWhen(c.updated_at) : "Never synced");
+  const sessions = ((state && state.sessions) || []).filter(isLogged);
+  return `${renderHeader("Client", true)}
+    <main>
+      <div class="stack-lg">
+        <div>
+          <h1 class="page-title">${esc(c.name)}</h1>
+          <p class="lede">Last synced ${esc(last)}. ${esc(sessions.length)} logged session${sessions.length === 1 ? "" : "s"}.</p>
+        </div>
+        ${ui.error ? `<p class="err" role="alert">${esc(ui.error)}</p>` : ""}
+        ${ui.busy && !state ? `<p class="empty">Loading…</p>` : ""}
+        ${!ui.busy && !state ? `<p class="empty">No data synced yet. Once they open their link and log a session, it will appear here.</p>` : ""}
+        ${state ? `
+          <div>
+            <h2 class="section-title">Recent sessions</h2>
+            <div class="stack">${renderSessions(state)}</div>
+          </div>
+          <div>
+            <h2 class="section-title">Lifts and volume</h2>
+            ${renderLifts(state)}
+          </div>
+          <div>
+            <h2 class="section-title">Check-ins</h2>
+            ${renderCheckIns(state)}
+          </div>
+          <div>
+            <h2 class="section-title">Meals</h2>
+            <div class="stack">${renderMeals(state)}</div>
+          </div>
+        ` : ""}
+        <div>
+          <button type="button" class="mini" data-act="copy" data-token="${esc(c.token)}" data-id="${esc(c.id)}" style="margin-bottom:1rem">${ui.copied === c.id ? "Copied" : "Copy their link"}</button>
+          ${ui.confirmDelete
+            ? `<div class="stack"><p class="err">Delete ${esc(c.name)} and all of their stored data? This cannot be undone.</p>
+                <button type="button" class="btn-danger" data-act="delete-yes" ${ui.busy ? "disabled" : ""}>Yes, delete</button>
+                <button type="button" class="btn-line" data-act="delete-no">Cancel</button></div>`
+            : `<button type="button" class="btn-danger" data-act="delete-ask">Delete client</button>`}
+        </div>
+      </div>
+    </main>`;
+}
+
+function render() {
+  const root = document.getElementById("app");
+  const focused = document.activeElement;
+  const keep = focused && focused.dataset && focused.dataset.keep;
+  const selStart = focused && focused.selectionStart;
+  const selEnd = focused && focused.selectionEnd;
+  let html = "";
+  if (ui.view === "gate") html = renderGate();
+  else if (ui.view === "detail") html = renderDetail();
+  else html = renderList();
+  root.innerHTML = `<div class="app">${html}</div>`;
+  if (keep) {
+    const el = document.querySelector("[data-keep=\"" + keep + "\"]");
+    if (el) {
+      el.focus();
+      if (typeof selStart === "number" && el.setSelectionRange) {
+        try { el.setSelectionRange(selStart, selEnd); } catch (e) {}
+      }
+    }
+  }
+}
+
+function onClick(e) {
+  const btn = e.target.closest("[data-act]");
+  if (!btn) return;
+  if (btn.tagName === "BUTTON" && btn.closest("form") && btn.type !== "submit") e.preventDefault();
+  const act = btn.dataset.act;
+  if (act === "back") { ui.view = "list"; ui.selected = null; ui.state = null; ui.confirmDelete = false; ui.error = ""; render(); }
+  else if (act === "lock") { ui.pass = ""; ui.passInput = ""; setPass(""); ui.view = "gate"; ui.clients = []; ui.selected = null; ui.state = null; ui.error = ""; render(); }
+  else if (act === "open") {
+    const c = ui.clients.find((x) => x.id === btn.dataset.id);
+    if (c) openClient(c);
+  }
+  else if (act === "copy") copyLink(btn.dataset.token, btn.dataset.id);
+  else if (act === "delete-ask") { ui.confirmDelete = true; render(); }
+  else if (act === "delete-no") { ui.confirmDelete = false; render(); }
+  else if (act === "delete-yes") deleteClient();
+}
+
+function onInput(e) {
+  const el = e.target;
+  if (!el.dataset.keep) return;
+  if (el.dataset.keep === "pass") ui.passInput = el.value;
+  if (el.dataset.keep === "name") {
+    ui.newName = el.value;
+    const btn = document.querySelector("form[data-act=add] .btn-primary");
+    if (btn) btn.disabled = ui.busy || !ui.newName.trim();
+  }
+}
+
+function onSubmit(e) {
+  const form = e.target.closest("form[data-act]");
+  if (!form) return;
+  e.preventDefault();
+  if (form.dataset.act === "unlock") {
+    const val = (form.pass && form.pass.value ? form.pass.value : ui.passInput).trim();
+    if (!val) { ui.error = "Enter your passcode."; render(); return; }
+    ui.pass = val;
+    ui.passInput = val;
+    setPass(val);
+    loadList();
+  } else if (form.dataset.act === "add") {
+    addClient(ui.newName);
+  }
+}
+
+document.addEventListener("click", onClick);
+document.addEventListener("input", onInput);
+document.addEventListener("submit", onSubmit);
+
+if (ui.pass) loadList();
+else render();
+
+</script>
+</body>
+</html>
