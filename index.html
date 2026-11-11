@@ -1,0 +1,1820 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Block</title>
+<meta name="description" content="Log the classic mass block. Weights stay on this phone.">
+<meta name="theme-color" content="#0b0c0a">
+<meta name="apple-mobile-web-app-title" content="Block">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<style>
+:root {
+  --bg: #0b0c0a;
+  --bg-2: #121410;
+  --surface: #161814;
+  --surface-2: #1b1e18;
+  --raised: #22251f;
+  --fg: #f4f1e8;
+  --muted: #a39e90;
+  --primary: #c8f54a;
+  --primary-fg: #12140c;
+  --accent: #c8f54a;
+  --line: #2c2f28;
+  --line-soft: rgba(200, 245, 74, 0.14);
+  --danger: #c4b8a8;
+  --shadow: 0 18px 40px rgba(0, 0, 0, 0.38);
+  --radius: 1.15rem;
+  --radius-sm: 0.85rem;
+  --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-display: "Iowan Old Style", "Palatino Linotype", Palatino, "Times New Roman", Georgia, serif;
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; }
+html { height: 100%; background: var(--bg); }
+body {
+  min-height: 100%;
+  color: var(--fg);
+  font-family: var(--font-sans);
+  background:
+    radial-gradient(1200px 700px at 80% -10%, rgba(200, 245, 74, 0.08), transparent 55%),
+    radial-gradient(900px 500px at 0% 100%, rgba(200, 245, 74, 0.04), transparent 50%),
+    linear-gradient(180deg, #10120e 0%, var(--bg) 28%, var(--bg) 100%);
+  background-attachment: fixed;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+button, input { font: inherit; color: inherit; }
+button { cursor: pointer; border: 0; background: none; padding: 0; }
+input { border: 0; }
+:focus { outline: none; }
+:focus-visible { box-shadow: 0 0 0 2px var(--bg), 0 0 0 4px var(--primary); }
+.tabular { font-variant-numeric: tabular-nums; letter-spacing: -0.02em; }
+.display { font-family: var(--font-display); font-weight: 400; letter-spacing: -0.03em; }
+.sr-only {
+  position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+  overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0;
+}
+
+.app {
+  width: 100%;
+  max-width: 32rem;
+  margin: 0 auto;
+  min-height: 100dvh;
+  position: relative;
+}
+
+.header {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  padding: calc(1.15rem + var(--safe-top)) 1.25rem 1rem;
+  background:
+    linear-gradient(180deg, rgba(200, 245, 74, 0.07), rgba(255, 255, 255, 0.04) 36%, transparent 70%),
+    rgba(11, 12, 10, 0.58);
+  backdrop-filter: blur(22px) saturate(1.4);
+  -webkit-backdrop-filter: blur(22px) saturate(1.4);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.28);
+}
+.brand-kicker {
+  margin: 0;
+  font-size: 11px;
+  letter-spacing: 0.46em;
+  text-transform: uppercase;
+  color: var(--fg);
+  font-weight: 600;
+}
+.brand-rule {
+  margin-top: 0.75rem;
+  width: 2.5rem;
+  height: 2px;
+  background: var(--accent);
+  border-radius: 99px;
+  box-shadow: 0 0 16px rgba(200, 245, 74, 0.45);
+}
+.brand-sub {
+  margin: 0.75rem 0 0;
+  font-size: 10px;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.icon-btn {
+  width: 2.75rem;
+  height: 2.75rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--fg);
+  border-radius: 999px;
+  transition: background 0.15s ease, transform 0.15s ease;
+}
+.icon-btn:hover { background: var(--raised); }
+.icon-btn:active { transform: scale(0.96); }
+.icon-btn:disabled { opacity: 0.4; }
+.icon-btn.solid {
+  background: var(--surface);
+  box-shadow: inset 0 0 0 1px var(--line);
+}
+
+main {
+  padding: 0.5rem 1.25rem calc(7.5rem + var(--safe-bottom));
+}
+.stack { display: flex; flex-direction: column; gap: 1rem; }
+.stack-3 { display: flex; flex-direction: column; gap: 0.75rem; }
+
+.date-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+.date-center { text-align: center; }
+.date-title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 1.6rem;
+  line-height: 1;
+  letter-spacing: -0.03em;
+}
+.date-sub {
+  margin: 0.3rem 0 0;
+  font-size: 0.875rem;
+  color: var(--muted);
+}
+
+.chips {
+  display: flex;
+  gap: 0.5rem;
+  overflow-x: auto;
+  margin: 0 -1.25rem;
+  padding: 0.1rem 1.25rem 0.2rem;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.chips::-webkit-scrollbar { display: none; }
+.chip {
+  flex: 0 0 auto;
+  min-width: 4.5rem;
+  height: 4rem;
+  padding: 0 0.75rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  border-radius: 1rem;
+  color: var(--fg);
+  background: transparent;
+  box-shadow: inset 0 0 0 1px var(--line);
+  transition: background 0.16s ease, color 0.16s ease, box-shadow 0.16s ease;
+}
+.chip .name { font-size: 0.875rem; font-weight: 500; letter-spacing: -0.02em; }
+.chip .meta { margin-top: 0.25rem; font-size: 0.75rem; color: var(--muted); }
+.chip.active {
+  background: var(--primary);
+  color: var(--primary-fg);
+  box-shadow: 0 8px 24px rgba(200, 245, 74, 0.22);
+}
+.chip.active .meta { color: var(--primary-fg); }
+
+.session-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 0.75rem; }
+.session-title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 2.35rem;
+  line-height: 0.95;
+  letter-spacing: -0.03em;
+}
+.progress {
+  margin: 0;
+  padding-bottom: 0.2rem;
+  font-size: 0.875rem;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+.note {
+  margin: 0.55rem 0 0;
+  font-size: 0.875rem;
+  line-height: 1.625;
+  color: var(--muted);
+}
+
+.banner, .card, .rest-card, .empty-card {
+  background: linear-gradient(180deg, color-mix(in srgb, var(--surface) 92%, #fff 8%), var(--surface));
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
+.banner {
+  margin: 0;
+  padding: 0.85rem 1rem;
+  font-size: 0.875rem;
+  line-height: 1.625;
+  color: var(--fg);
+  background: linear-gradient(180deg, var(--raised), var(--surface-2));
+}
+.rest-card, .empty-card { padding: 2rem 1rem; text-align: center; }
+.rest-card h3, .empty-card h2, .empty-card h3 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 1.85rem;
+  letter-spacing: -0.03em;
+}
+.rest-card p, .empty-card p {
+  margin: 0.5rem 0 0;
+  font-size: 0.875rem;
+  color: var(--muted);
+  line-height: 1.625;
+}
+
+.copy-last {
+  height: 2.75rem;
+  padding: 0 1rem;
+  border-radius: 999px;
+  background: var(--raised);
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--fg);
+  align-self: flex-start;
+  box-shadow: inset 0 0 0 1px var(--line);
+}
+
+.ex {
+  padding: 1rem;
+}
+.ex-top { display: flex; align-items: flex-start; gap: 0.5rem; }
+.ex-name {
+  margin: 0;
+  flex: 1;
+  min-width: 0;
+  font-size: 1rem;
+  font-weight: 600;
+  line-height: 1.3;
+}
+.ex-idx {
+  margin-right: 0.5rem;
+  font-family: var(--font-display);
+  font-size: 1.25rem;
+  color: var(--primary);
+  font-variant-numeric: tabular-nums;
+}
+.ex-actions { display: flex; flex-shrink: 0; gap: 0.25rem; }
+.cue {
+  margin: 0.3rem 0 0;
+  font-size: 0.875rem;
+  color: var(--muted);
+}
+.set-ctrl {
+  margin-top: 0.75rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.set-count {
+  width: 3.5rem;
+  flex-shrink: 0;
+  text-align: center;
+  font-size: 0.875rem;
+  font-variant-numeric: tabular-nums;
+}
+.field {
+  height: 2.75rem;
+  min-width: 0;
+  flex: 1;
+  border-radius: var(--radius-sm);
+  background: var(--bg);
+  padding: 0 0.75rem;
+  color: var(--fg);
+  box-shadow: inset 0 0 0 1px var(--line);
+}
+.field:focus { box-shadow: inset 0 0 0 1px var(--primary); }
+.field.center { text-align: center; }
+.sets { margin-top: 0.75rem; display: flex; flex-direction: column; gap: 0.75rem; }
+.set { display: flex; flex-direction: column; gap: 0.25rem; }
+.set-target { display: flex; align-items: center; gap: 0.5rem; }
+.set-n { width: 1rem; font-size: 0.875rem; color: var(--muted); font-variant-numeric: tabular-nums; }
+.target-wrap {
+  display: flex;
+  align-items: center;
+  height: 2.25rem;
+  min-width: 0;
+  flex: 1;
+  border-radius: var(--radius-sm);
+  background: var(--bg);
+  box-shadow: inset 0 0 0 1px var(--line);
+}
+.target-wrap:focus-within { box-shadow: inset 0 0 0 1px var(--primary); }
+.target-wrap .lbl { padding-left: 0.75rem; font-size: 0.75rem; color: var(--muted); }
+.target-wrap input {
+  height: 2.25rem;
+  min-width: 0;
+  flex: 1;
+  background: transparent;
+  padding: 0 0.5rem;
+  font-size: 0.875rem;
+}
+.set-row { display: flex; align-items: center; gap: 0.25rem; }
+.weight-input, .reps-input {
+  height: 2.75rem;
+  width: 100%;
+  border-radius: var(--radius-sm);
+  background: var(--bg);
+  text-align: center;
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+  font-variant-numeric: tabular-nums;
+  box-shadow: inset 0 0 0 1px var(--line);
+}
+.weight-input:focus, .reps-input:focus { box-shadow: inset 0 0 0 1px var(--primary); }
+.weight-lab { min-width: 0; flex: 1; }
+.reps-lab { width: 4rem; flex-shrink: 0; }
+.done-btn {
+  width: 2.75rem;
+  height: 2.75rem;
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  background: var(--raised);
+  color: var(--muted);
+  box-shadow: inset 0 0 0 1px var(--line);
+  transition: background 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
+}
+.done-btn.on {
+  background: var(--primary);
+  color: var(--primary-fg);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--primary) 50%, transparent), 0 0 18px rgba(200, 245, 74, 0.28);
+}
+.last-time { margin: 0.75rem 0 0; font-size: 0.875rem; color: var(--muted); }
+
+.add-ex p, .section-kicker {
+  margin: 0;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+.muscle-row { margin-top: 0.75rem; display: flex; flex-wrap: wrap; gap: 0.5rem; }
+.pill {
+  height: 2.25rem;
+  padding: 0 0.75rem;
+  border-radius: 999px;
+  background: var(--raised);
+  color: var(--muted);
+  font-size: 0.875rem;
+}
+.pill.on { background: var(--primary); color: var(--primary-fg); }
+
+.btn-primary, .btn-ghost, .btn-line {
+  height: 3rem;
+  width: 100%;
+  font-size: 11px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  border-radius: 0.9rem;
+  transition: opacity 0.15s ease, background 0.15s ease, color 0.15s ease;
+}
+.btn-primary { background: var(--primary); color: var(--primary-fg); font-weight: 600; }
+.btn-primary:disabled { opacity: 0.4; }
+.btn-ghost {
+  background: transparent;
+  color: var(--muted);
+  box-shadow: inset 0 0 0 1px var(--line);
+}
+.btn-ghost.done-session { color: var(--muted); }
+.btn-line {
+  background: transparent;
+  color: var(--fg);
+  box-shadow: inset 0 0 0 1px var(--line);
+  height: 2.75rem;
+  letter-spacing: 0.16em;
+}
+.mt-2 { margin-top: 0.5rem; }
+.mt-3 { margin-top: 0.75rem; }
+.mt-4 { margin-top: 1rem; }
+.mt-5 { margin-top: 1.25rem; }
+
+.tabbar {
+  position: fixed;
+  left: 0; right: 0; bottom: 0;
+  z-index: 20;
+  border-top: 1px solid var(--line);
+  background: color-mix(in srgb, var(--bg) 90%, transparent);
+  backdrop-filter: blur(18px) saturate(1.2);
+  -webkit-backdrop-filter: blur(18px) saturate(1.2);
+}
+.tabbar-inner {
+  max-width: 32rem;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+}
+.tab {
+  height: 4rem;
+  padding-bottom: var(--safe-bottom);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.2rem;
+  font-size: 9px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+  border-top: 2px solid transparent;
+}
+.tab.active { color: var(--fg); border-top-color: var(--accent); }
+
+.sheet-bg {
+  position: fixed;
+  inset: 0;
+  z-index: 30;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  background: color-mix(in srgb, var(--bg) 80%, transparent);
+}
+.sheet-dismiss { position: absolute; inset: 0; }
+.sheet {
+  position: relative;
+  z-index: 10;
+  width: 100%;
+  max-width: 32rem;
+  padding: 1.5rem 1.25rem calc(2rem + var(--safe-bottom));
+  background: var(--bg-2);
+  border-top: 2px solid var(--accent);
+  box-shadow: 0 -24px 60px rgba(0,0,0,0.45);
+}
+.sheet h2 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 1.85rem;
+  letter-spacing: -0.03em;
+}
+.sheet .hint { margin: 1.25rem 0 0; font-size: 0.875rem; color: var(--muted); }
+.unit-grid { margin-top: 0.5rem; display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; }
+.sheet label { display: block; margin-top: 1.25rem; font-size: 0.875rem; color: var(--muted); }
+.sheet .clear { margin-top: 1rem; height: 2.75rem; width: 100%; border-radius: 999px; font-size: 0.875rem; color: var(--muted); }
+.page-title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 2.35rem;
+  line-height: 0.95;
+  letter-spacing: -0.03em;
+}
+.lede { margin: 0.5rem 0 0; font-size: 0.875rem; line-height: 1.625; color: var(--muted); }
+
+.log-row, .lift-row, .vol-row {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1rem;
+  text-align: left;
+}
+.log-row { padding: 1rem; }
+.log-main { flex: 1; min-width: 0; }
+.log-main h3 { margin: 0; font-family: var(--font-display); font-size: 1.5rem; line-height: 1; }
+.log-main p, .lift-sub { margin: 0.3rem 0 0; font-size: 0.875rem; color: var(--muted); }
+.log-right, .lift-right { text-align: right; }
+.log-right .num, .lift-right .num {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+  line-height: 1;
+  color: var(--primary);
+  font-variant-numeric: tabular-nums;
+}
+.log-right .lbl { margin: 0.25rem 0 0; font-size: 0.75rem; color: var(--muted); }
+.log-detail { border-top: 1px solid var(--line); padding: 0.75rem 1rem 1rem; }
+.log-detail .vol { margin: 0 0 0.75rem; font-size: 0.875rem; color: var(--muted); font-variant-numeric: tabular-nums; }
+.log-detail li { list-style: none; }
+.log-detail ul { margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.75rem; }
+.log-detail .ex-l { margin: 0; font-size: 0.875rem; font-weight: 500; }
+.log-detail .sets-l { margin: 0.25rem 0 0; font-size: 0.875rem; color: var(--muted); font-variant-numeric: tabular-nums; }
+
+.lift-group h3 {
+  margin: 0 0 0.5rem;
+  font-size: 11px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.lift-list, .history-list { overflow: hidden; border-radius: var(--radius); border: 1px solid var(--line); background: var(--surface); box-shadow: var(--shadow); }
+.lift-row { border-bottom: 1px solid var(--line); }
+.lift-row:last-child, .history-list li:last-child { border-bottom: 0; }
+.lift-name { flex: 1; min-width: 0; font-size: 0.875rem; font-weight: 500; }
+.back-pill {
+  height: 2.75rem;
+  padding: 0 1rem;
+  border-radius: 999px;
+  background: var(--surface);
+  font-size: 0.875rem;
+  box-shadow: inset 0 0 0 1px var(--line);
+  align-self: flex-start;
+}
+.chart {
+  height: 10rem;
+  padding: 0.75rem 0.5rem;
+  color: var(--primary);
+}
+.chart svg { width: 100%; height: 100%; display: block; }
+.history-list li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid var(--line);
+}
+.history-list .when { font-size: 0.875rem; color: var(--muted); }
+.history-list .val { font-family: var(--font-display); font-size: 1.5rem; font-variant-numeric: tabular-nums; }
+.history-list .val span { margin-left: 0.25rem; font-size: 1rem; color: var(--muted); }
+
+.vol-card { overflow: hidden; }
+.vol-top { display: flex; align-items: baseline; justify-content: space-between; gap: 0.75rem; }
+.vol-name { margin: 0; font-size: 1rem; font-weight: 500; }
+.vol-sets {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+  line-height: 1;
+  color: var(--primary);
+  font-variant-numeric: tabular-nums;
+}
+.bar { margin-top: 0.5rem; height: 0.375rem; overflow: hidden; border-radius: 999px; background: var(--bg); }
+.bar > span { display: block; height: 100%; border-radius: 999px; background: var(--primary); }
+.vol-sources { border-top: 1px solid var(--line); padding: 0.75rem 1rem; margin: 0; list-style: none; }
+.vol-sources li { display: flex; align-items: baseline; justify-content: space-between; gap: 0.75rem; padding: 0.25rem 0; font-size: 0.875rem; }
+.vol-sources .src-name { min-width: 0; }
+.vol-sources .src-day { color: var(--muted); }
+
+.check-sec { padding: 1rem; }
+.check-sec h3 { margin: 0; font-family: var(--font-display); font-size: 1.5rem; line-height: 1; }
+.check-day { border-top: 1px solid var(--line); padding: 0.75rem 0; }
+.check-day:first-of-type { margin-top: 1rem; }
+.check-head { display: flex; align-items: baseline; justify-content: space-between; }
+.check-head .dow { margin: 0; font-size: 0.875rem; font-weight: 500; }
+.check-head .dt { margin: 0; font-size: 0.875rem; font-variant-numeric: tabular-nums; color: var(--muted); }
+.check-head .dt.today { color: var(--accent); }
+.check-grid, .avg-grid { margin-top: 0.5rem; display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; }
+.avg-grid { margin-top: 0.75rem; padding-top: 0.75rem; border-top: 1px solid var(--line); gap: 0.75rem; }
+.flabel { font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); }
+.flabel input {
+  margin-top: 0.25rem;
+  height: 2.75rem;
+  width: 100%;
+  background: var(--bg);
+  padding: 0 0.75rem;
+  text-align: center;
+  font-size: 0.875rem;
+  letter-spacing: normal;
+  text-transform: none;
+  font-variant-numeric: tabular-nums;
+  box-shadow: inset 0 0 0 1px var(--line);
+  border-radius: 0.65rem;
+}
+.flabel input:focus { box-shadow: inset 0 0 0 1px var(--accent); }
+.flabel input:disabled { opacity: 0.4; }
+.avg-label { margin: 0; font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); }
+.avg-val { margin: 0.25rem 0 0; font-family: var(--font-display); font-size: 1.5rem; line-height: 1; font-variant-numeric: tabular-nums; }
+.avg-val span { margin-left: 0.25rem; font-family: var(--font-sans); font-size: 0.75rem; color: var(--muted); }
+
+.day-total { border-top: 1px solid var(--line); padding-top: 1rem; }
+.kicker {
+  margin: 0;
+  font-size: 10px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.kcal {
+  margin: 0.5rem 0 0;
+  font-family: var(--font-display);
+  font-size: 3rem;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+.kcal span { margin-left: 0.5rem; font-family: var(--font-sans); font-size: 0.875rem; letter-spacing: normal; color: var(--muted); }
+.macro-grid { margin-top: 1rem; display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.75rem; }
+.macro-l { margin: 0; font-size: 10px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--muted); }
+.macro-v { margin: 0.25rem 0 0; font-family: var(--font-display); font-size: 1.5rem; line-height: 1; font-variant-numeric: tabular-nums; }
+.macro-v span { margin-left: 0.25rem; font-family: var(--font-sans); font-size: 0.75rem; color: var(--muted); }
+.meal { padding: 1rem; position: relative; }
+.meal.z { z-index: 10; }
+.meal-num { margin: 0; font-size: 10px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--muted); }
+.meal-name {
+  margin-top: 0.25rem;
+  width: 100%;
+  background: transparent;
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+}
+.meal-item { border-top: 1px solid var(--line); padding-top: 0.75rem; margin-top: 0.75rem; }
+.meal-item-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 0.75rem; }
+.meal-item-top p { margin: 0; min-width: 0; font-size: 0.875rem; }
+.rm { flex-shrink: 0; font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); }
+.grams-row { margin-top: 0.5rem; display: flex; align-items: center; gap: 0.5rem; }
+.grams-row input {
+  height: 2.75rem;
+  width: 6rem;
+  background: var(--bg);
+  padding: 0 0.75rem;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+  box-shadow: inset 0 0 0 1px var(--line);
+  border-radius: 0.65rem;
+}
+.grams-row span { font-size: 0.875rem; color: var(--muted); }
+.meal-total { margin-top: 1rem; border-top: 1px solid var(--line); padding-top: 0.75rem; }
+.search-row { display: flex; align-items: center; gap: 0.5rem; }
+.search-row .q { flex: 1; min-width: 0; }
+.suggest {
+  position: absolute;
+  left: 1rem; right: 1rem;
+  z-index: 10;
+  margin-top: 0.25rem;
+  max-height: 14rem;
+  overflow-y: auto;
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: 0.75rem;
+}
+.suggest button {
+  display: flex;
+  min-height: 2.75rem;
+  width: 100%;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.5rem 0.75rem;
+  text-align: left;
+  font-size: 0.875rem;
+}
+.suggest .amt { flex-shrink: 0; color: var(--muted); font-variant-numeric: tabular-nums; }
+.suggest .none { padding: 0.75rem; font-size: 0.875rem; color: var(--muted); }
+.linkish {
+  margin-top: 0.5rem;
+  font-size: 10px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+.new-food { margin-top: 0.75rem; display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; }
+.new-food .span2 { grid-column: 1 / -1; }
+.page-stack { display: flex; flex-direction: column; gap: 1.25rem; }
+.page-stack-lg { display: flex; flex-direction: column; gap: 1.5rem; }
+.lift-pages { display: flex; flex-direction: column; gap: 1rem; }
+
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script>
+const DATA = {"days": [{"id": "push", "name": "Push", "short": "Push", "weekday": 1, "rest": false, "note": "Superset cable laterals with pushdowns if the session runs long.", "exercises": [{"id": "push-incline", "name": "Incline DB press", "sets": 3, "reps": "8–12", "muscles": ["chest"]}, {"id": "push-flat", "name": "Flat machine or DB press", "sets": 3, "reps": "10–15", "muscles": ["chest"]}, {"id": "push-fly", "name": "High-to-low cable fly", "sets": 2, "reps": "12–20", "muscles": ["chest"]}, {"id": "push-shoulder", "name": "Seated DB shoulder press", "sets": 3, "reps": "8–12", "muscles": ["shoulders"]}, {"id": "push-lat-db", "name": "DB lateral raise", "sets": 3, "reps": "12–20", "muscles": ["shoulders"]}, {"id": "push-lat-cable", "name": "Cable lateral raise", "sets": 3, "reps": "15–25", "muscles": ["shoulders"]}, {"id": "push-oh", "name": "Overhead cable extension", "sets": 3, "reps": "10–15", "muscles": ["triceps"]}, {"id": "push-down", "name": "Rope pushdown", "sets": 3, "reps": "12–20", "muscles": ["triceps"]}]}, {"id": "pull", "name": "Pull", "short": "Pull", "weekday": 2, "rest": false, "note": "EZ-bar is the heavier curl. Superset hammers with face pulls.", "exercises": [{"id": "pull-incline", "name": "Incline DB curl", "sets": 3, "reps": "10–15", "muscles": ["biceps"]}, {"id": "pull-ez", "name": "EZ-bar curl", "sets": 3, "reps": "8–12", "muscles": ["biceps"]}, {"id": "pull-hammer", "name": "Hammer curl", "sets": 3, "reps": "10–15", "muscles": ["biceps"]}, {"id": "pull-down", "name": "Pull-up or wide pulldown", "sets": 3, "reps": "8–12", "muscles": ["back"]}, {"id": "pull-row", "name": "Chest-supported row", "sets": 3, "reps": "10–15", "muscles": ["back"]}, {"id": "pull-straight", "name": "Straight-arm pulldown", "sets": 2, "reps": "12–20", "muscles": ["back"]}, {"id": "pull-rear", "name": "Rear-delt fly", "sets": 3, "reps": "15–25", "muscles": ["rear-delts"]}, {"id": "pull-face", "name": "Face pull", "sets": 3, "reps": "15–25", "muscles": ["rear-delts"]}]}, {"id": "legs", "name": "Legs", "short": "Legs", "weekday": 3, "rest": false, "note": "Adductors after the squat. On the glute drive, lock the hips and don’t bend the back.", "exercises": [{"id": "legs-hack", "name": "Hack squat or high-bar squat", "sets": 4, "reps": "8–12", "muscles": ["quads"]}, {"id": "legs-glute", "name": "Glute drive or hip thrust", "sets": 3, "reps": "10–15", "muscles": ["glutes"], "cue": "Feet set so the glutes lock out, not the quads."}, {"id": "legs-add", "name": "Machine hip adduction", "sets": 3, "reps": "12–20", "muscles": ["adductors"]}, {"id": "legs-ext", "name": "Leg extension", "sets": 3, "reps": "12–20", "muscles": ["quads"], "cue": "Pause at the top."}, {"id": "legs-curl", "name": "Lying leg curl", "sets": 3, "reps": "10–15", "muscles": ["hamstrings"]}, {"id": "legs-calf", "name": "Standing calf raise", "sets": 4, "reps": "10–20", "muscles": ["calves"]}, {"id": "legs-lat", "name": "Lean-away or machine lateral", "sets": 3, "reps": "15–25", "muscles": ["shoulders"]}]}, {"id": "rest-thu", "name": "Rest", "short": "Rest", "weekday": 4, "rest": true, "note": "Walk, eat, sleep. This rest is part of the block.", "exercises": []}, {"id": "quads", "name": "Quads + chest", "short": "Quads", "weekday": 5, "rest": false, "note": "Last Bulgarian set stops at 2 reps in reserve. Superset pec deck and kickbacks.", "exercises": [{"id": "quads-press", "name": "Leg press", "sets": 4, "reps": "10–15", "muscles": ["quads"]}, {"id": "quads-bulg", "name": "Bulgarian split squat", "sets": 3, "reps": "10–15", "muscles": ["quads"], "cue": "Per leg. Last set at 2 reps in reserve."}, {"id": "quads-single", "name": "Single-leg extension", "sets": 2, "reps": "15–20", "muscles": ["quads"]}, {"id": "quads-add", "name": "Machine hip adduction", "sets": 3, "reps": "15–25", "muscles": ["adductors"]}, {"id": "quads-pec", "name": "Pec deck", "sets": 2, "reps": "12–20", "muscles": ["chest"]}, {"id": "quads-fly", "name": "Low-to-high cable fly", "sets": 2, "reps": "15–20", "muscles": ["chest"]}, {"id": "quads-dip", "name": "Chest-biased dip", "sets": 3, "reps": "10–15", "muscles": ["chest"]}, {"id": "quads-kick", "name": "Cable kickback", "sets": 3, "reps": "15–20", "muscles": ["triceps"]}]}, {"id": "back", "name": "Back + hamstrings", "short": "Back", "weekday": 6, "rest": false, "note": "RDL first. If your lower back takes over, do the seated curl first.", "exercises": [{"id": "back-rdl", "name": "Romanian deadlift", "sets": 4, "reps": "8–12", "muscles": ["hamstrings", "glutes"], "cue": "Stop when the hamstrings give out, not the lower back."}, {"id": "back-seated", "name": "Seated leg curl", "sets": 4, "reps": "10–15", "muscles": ["hamstrings"]}, {"id": "back-lying", "name": "Lying leg curl", "sets": 3, "reps": "12–20", "muscles": ["hamstrings"]}, {"id": "back-down", "name": "Neutral-grip pulldown", "sets": 3, "reps": "10–15", "muscles": ["back"]}, {"id": "back-row", "name": "One-arm row", "sets": 3, "reps": "10–15", "muscles": ["back"]}, {"id": "back-curl", "name": "Bayesian or preacher curl", "sets": 3, "reps": "12–15", "muscles": ["biceps"]}, {"id": "back-calf", "name": "Seated calf raise", "sets": 4, "reps": "15–25", "muscles": ["calves"]}]}, {"id": "rest-sun", "name": "Rest", "short": "Rest", "weekday": 0, "rest": true, "note": "Walk, eat, sleep. Same rules as Thursday.", "exercises": []}], "muscles": [{"id": "chest", "name": "Chest"}, {"id": "shoulders", "name": "Shoulders"}, {"id": "rear-delts", "name": "Rear delts"}, {"id": "triceps", "name": "Triceps"}, {"id": "biceps", "name": "Biceps"}, {"id": "back", "name": "Back"}, {"id": "quads", "name": "Quads"}, {"id": "hamstrings", "name": "Hamstrings"}, {"id": "glutes", "name": "Glutes"}, {"id": "adductors", "name": "Adductors"}, {"id": "calves", "name": "Calves"}], "foods": [{"id": "chicken-breast-1", "name": "Chicken Breast", "portion": 100, "unit": "g", "protein": 23.2, "carbs": 0, "fat": 1.1, "kcal": 103}, {"id": "5-lean-beef-mince-2", "name": "5% Lean Beef Mince", "portion": 100, "unit": "g", "protein": 20.4, "carbs": 0.5, "fat": 4.3, "kcal": 121}, {"id": "2-lean-turkey-mince-3", "name": "2% Lean Turkey Mince", "portion": 100, "unit": "g", "protein": 25.4, "carbs": 0.2, "fat": 1.3, "kcal": 114}, {"id": "salmon-4", "name": "Salmon", "portion": 100, "unit": "g", "protein": 20.2, "carbs": 0, "fat": 11, "kcal": 180}, {"id": "john-west-tuna-chunks-in-spring-water-5", "name": "John West Tuna Chunks In Spring Water", "portion": 100, "unit": "g", "protein": 25, "carbs": 0, "fat": 0.5, "kcal": 105}, {"id": "birds-eye-haddock-fillet-6", "name": "Birds Eye Haddock Fillet", "portion": 1, "unit": "Fillet", "protein": 22, "carbs": 2.4, "fat": 7.9, "kcal": 169}, {"id": "king-prawns-7", "name": "King Prawns", "portion": 100, "unit": "g", "protein": 15, "carbs": 0.5, "fat": 5, "kcal": 65}, {"id": "bacon-medallion-8", "name": "Bacon Medallion", "portion": 1, "unit": "Medallion", "protein": 4.3, "carbs": 0.1, "fat": 0.4, "kcal": 21}, {"id": "porky-lights-sausage-9", "name": "Porky Lights Sausage", "portion": 1, "unit": "Sausage", "protein": 11, "carbs": 3.8, "fat": 4.7, "kcal": 108}, {"id": "heck-chicken-sausages-10", "name": "Heck Chicken Sausages", "portion": 1, "unit": "Sausage", "protein": 6.3, "carbs": 0.4, "fat": 1, "kcal": 37}, {"id": "turkey-bacon-11", "name": "Turkey Bacon", "portion": 1, "unit": "Rasher", "protein": 7.5, "carbs": 0, "fat": 0.4, "kcal": 34}, {"id": "wiltshire-slice-ham-12", "name": "Wiltshire Slice Ham", "portion": 100, "unit": "g", "protein": 23.5, "carbs": 0.2, "fat": 2.6, "kcal": 119}, {"id": "large-whole-egg-13", "name": "Large Whole Egg", "portion": 1, "unit": "Egg", "protein": 6, "carbs": 0, "fat": 5, "kcal": 69}, {"id": "egg-whites-14", "name": "Egg Whites", "portion": 100, "unit": "g", "protein": 10.9, "carbs": 0.8, "fat": 0, "kcal": 47}, {"id": "tinned-cannellini-beans-15", "name": "Tinned Cannellini Beans", "portion": 100, "unit": "g", "protein": 7, "carbs": 15.2, "fat": 0.4, "kcal": 108}, {"id": "tinned-butter-beans-16", "name": "Tinned Butter Beans", "portion": 100, "unit": "g", "protein": 7.2, "carbs": 15.6, "fat": 0.5, "kcal": 109}, {"id": "heinz-beans-17", "name": "Heinz Beans", "portion": 100, "unit": "g", "protein": 4.7, "carbs": 12.5, "fat": 0.2, "kcal": 78}, {"id": "grenade-protein-bar-18", "name": "Grenade Protein Bar", "portion": 1, "unit": "Bar", "protein": 20, "carbs": 19, "fat": 12, "kcal": 242}, {"id": "snickers-protein-flapjack-19", "name": "Snickers Protein Flapjack", "portion": 1, "unit": "Bar", "protein": 16, "carbs": 26.5, "fat": 8.8, "kcal": 248}, {"id": "fage-total-0-yoghurt-20", "name": "Fage Total 0% Yoghurt", "portion": 100, "unit": "g", "protein": 10.3, "carbs": 3, "fat": 0, "kcal": 54}, {"id": "whey-protein-21", "name": "Whey Protein", "portion": 100, "unit": "g", "protein": 70, "carbs": 10, "fat": 2, "kcal": 340}, {"id": "soy-tempah-22", "name": "Soy Tempah", "portion": 100, "unit": "g", "protein": 19.4, "carbs": 14.1, "fat": 7.1, "kcal": 203}, {"id": "brittish-beef-burger-23", "name": "Brittish beef burger", "portion": 1, "unit": "Patty", "protein": 21.7, "carbs": 1.1, "fat": 12.2, "kcal": 201}, {"id": "sirloin-steak-24", "name": "Sirloin Steak", "portion": 200, "unit": "g", "protein": 43.2, "carbs": 0, "fat": 25.4, "kcal": 402}, {"id": "cottage-cheese-25", "name": "Cottage Cheese", "portion": 100, "unit": "g", "protein": 10.1, "carbs": 5.1, "fat": 1.3, "kcal": 68}, {"id": "wow-hydrate-drink-26", "name": "WOW Hydrate Drink", "portion": 1, "unit": "Bottle", "protein": 20, "carbs": 3.1, "fat": 0, "kcal": 97}, {"id": "aldi-birthday-cake-protein-bar-27", "name": "Aldi Birthday Cake Protein Bar", "portion": 1, "unit": "Bar", "protein": 21, "carbs": 17.3, "fat": 4.6, "kcal": 214}, {"id": "richmond-chicken-sausage-28", "name": "Richmond Chicken Sausage", "portion": 1, "unit": "Sausage", "protein": 5.5, "carbs": 9.4, "fat": 4.8, "kcal": 85}, {"id": "lentils-29", "name": "Lentils", "portion": 100, "unit": "g", "protein": 9, "carbs": 20, "fat": 0.4, "kcal": 116}, {"id": "myprotein-clear-whey-30", "name": "MyProtein Clear Whey", "portion": 24, "unit": "g", "protein": 20, "carbs": 0.7, "fat": 0, "kcal": 84}, {"id": "quorn-mince-31", "name": "Quorn Mince", "portion": 100, "unit": "g", "protein": 13, "carbs": 2.3, "fat": 1.7, "kcal": 92}, {"id": "porridge-oats-32", "name": "Porridge Oats", "portion": 100, "unit": "g", "protein": 12.1, "carbs": 56.1, "fat": 8.4, "kcal": 348}, {"id": "oats-so-simple-protein-porridge-pot-33", "name": "Oats So Simple Protein Porridge Pot", "portion": 49, "unit": "g", "protein": 12, "carbs": 26, "fat": 2.7, "kcal": 181}, {"id": "hovis-best-of-both-bread-34", "name": "Hovis Best of Both Bread", "portion": 1, "unit": "Slice", "protein": 3.8, "carbs": 15.2, "fat": 0.8, "kcal": 86}, {"id": "warburtons-thin-bagels-plain-35", "name": "Warburtons Thin Bagels (plain)", "portion": 1, "unit": "Bagel", "protein": 5, "carbs": 25, "fat": 0.7, "kcal": 130}, {"id": "mccains-jacket-potato-36", "name": "McCains Jacket Potato", "portion": 1, "unit": "Potato", "protein": 3.3, "carbs": 44.9, "fat": 1, "kcal": 202}, {"id": "warburtons-thin-bagels-cinnamon-raisin-37", "name": "Warburtons Thin Bagels (cinnamon&raisin)", "portion": 1, "unit": "Bagel", "protein": 4.9, "carbs": 25.9, "fat": 0.6, "kcal": 130}, {"id": "warburton-thins-plain-38", "name": "Warburton Thins - Plain", "portion": 1, "unit": "Thin", "protein": 3.9, "carbs": 19.8, "fat": 1.1, "kcal": 100}, {"id": "wholemeal-warburtons-cob-39", "name": "Wholemeal Warburtons Cob", "portion": 1, "unit": "Cob", "protein": 5.9, "carbs": 22.5, "fat": 2.2, "kcal": 140}, {"id": "kingsmill-medium-bread-50-50-40", "name": "Kingsmill medium bread - 50/50", "portion": 1, "unit": "Slice", "protein": 4, "carbs": 16.5, "fat": 0.9, "kcal": 94}, {"id": "medium-wholemead-bread-41", "name": "Medium Wholemead Bread", "portion": 1, "unit": "Slice", "protein": 2.8, "carbs": 11, "fat": 0.4, "kcal": 63}, {"id": "plain-tortilla-wrap-42", "name": "Plain Tortilla Wrap", "portion": 1, "unit": "Wrap", "protein": 5, "carbs": 30.3, "fat": 3.1, "kcal": 173}, {"id": "brioche-bun-43", "name": "Brioche Bun", "portion": 1, "unit": "Bun", "protein": 5.1, "carbs": 27.8, "fat": 3.3, "kcal": 163}, {"id": "crumpet-44", "name": "Crumpet", "portion": 1, "unit": "Crumpet", "protein": 2.9, "carbs": 18.7, "fat": 0.4, "kcal": 95}, {"id": "wholemeal-bread-45", "name": "Wholemeal Bread", "portion": 1, "unit": "Slice", "protein": 4.2, "carbs": 15.1, "fat": 2, "kcal": 96}, {"id": "white-bread-46", "name": "White Bread", "portion": 1, "unit": "Slice", "protein": 4, "carbs": 16.5, "fat": 0.9, "kcal": 94}, {"id": "sweet-potato-47", "name": "Sweet Potato", "portion": 100, "unit": "g", "protein": 1.2, "carbs": 21.3, "fat": 0, "kcal": 98}, {"id": "white-potato-48", "name": "White Potato", "portion": 100, "unit": "g", "protein": 2.1, "carbs": 17.2, "fat": 0.2, "kcal": 91}, {"id": "mccains-5-oven-chips-49", "name": "McCains 5% Oven Chips", "portion": 100, "unit": "g", "protein": 2.1, "carbs": 22.3, "fat": 3.3, "kcal": 132}, {"id": "warburtons-sandwich-thins-50", "name": "Warburtons Sandwich Thins", "portion": 1, "unit": "Thin", "protein": 4, "carbs": 18.1, "fat": 1.1, "kcal": 100}, {"id": "basmati-rice-microwave-51", "name": "Basmati Rice - Microwave", "portion": 100, "unit": "g", "protein": 2.6, "carbs": 26.4, "fat": 1.8, "kcal": 132}, {"id": "weetabix-orginal-52", "name": "Weetabix Orginal", "portion": 1, "unit": "Biscuit", "protein": 2.2, "carbs": 13, "fat": 0.4, "kcal": 68}, {"id": "coco-pops-53", "name": "Coco Pops", "portion": 100, "unit": "g", "protein": 6.1, "carbs": 81, "fat": 3, "kcal": 385}, {"id": "rice-krispies-54", "name": "Rice Krispies", "portion": 100, "unit": "g", "protein": 6.7, "carbs": 96.7, "fat": 0, "kcal": 433}, {"id": "frosties-55", "name": "Frosties", "portion": 100, "unit": "g", "protein": 4.5, "carbs": 87, "fat": 1, "kcal": 375}, {"id": "pasta-dry-56", "name": "Pasta - Dry", "portion": 100, "unit": "g", "protein": 7, "carbs": 73, "fat": 1, "kcal": 355}, {"id": "spaghetti-57", "name": "Spaghetti", "portion": 100, "unit": "g", "protein": 12, "carbs": 75, "fat": 2, "kcal": 368}, {"id": "new-york-plain-bagel-58", "name": "New York Plain Bagel", "portion": 1, "unit": "Bagel", "protein": 9.1, "carbs": 43, "fat": 1, "kcal": 226}, {"id": "uncooked-white-rice-59", "name": "Uncooked White Rice", "portion": 100, "unit": "g", "protein": 9, "carbs": 76, "fat": 2, "kcal": 354}, {"id": "uncooked-brown-rice-60", "name": "Uncooked Brown Rice", "portion": 100, "unit": "g", "protein": 8, "carbs": 77, "fat": 3, "kcal": 366}, {"id": "new-york-cinnamon-raisin-bagel-61", "name": "New York Cinnamon & Raisin Bagel", "portion": 1, "unit": "Bagel", "protein": 9, "carbs": 56, "fat": 1.5, "kcal": 232}, {"id": "trainedbyjp-cream-of-rice-62", "name": "TrainedByJP - Cream of Rice", "portion": 100, "unit": "g", "protein": 6.7, "carbs": 76.9, "fat": 0.6, "kcal": 340}, {"id": "harvest-morn-salt-vinegar-rice-cake-63", "name": "Harvest Morn Salt & Vinegar Rice Cake", "portion": 1, "unit": "Cake", "protein": 0.8, "carbs": 7.3, "fat": 0.1, "kcal": 34}, {"id": "rice-crispy-square-bar-marshmallow-64", "name": "Rice Crispy Square Bar - Marshmallow", "portion": 1, "unit": "Bar", "protein": 0.8, "carbs": 21, "fat": 3, "kcal": 118}, {"id": "rice-crispy-square-bar-chocolate-65", "name": "Rice Crispy Square Bar - Chocolate", "portion": 1, "unit": "Bar", "protein": 1.6, "carbs": 27, "fat": 5, "kcal": 156}, {"id": "iced-gems-66", "name": "Iced Gems", "portion": 1, "unit": "Pack", "protein": 1.1, "carbs": 19.9, "fat": 1, "kcal": 92}, {"id": "snack-a-jack-chocolate-67", "name": "Snack A Jack - Chocolate", "portion": 1, "unit": "Cake", "protein": 0.9, "carbs": 12.2, "fat": 1.1, "kcal": 62}, {"id": "crunchy-nut-cornflakes-68", "name": "Crunchy Nut Cornflakes", "portion": 100, "unit": "g", "protein": 5.9, "carbs": 82.5, "fat": 4.9, "kcal": 398}, {"id": "curly-wurly-chocolate-bar-69", "name": "Curly Wurly Chocolate Bar", "portion": 1, "unit": "Bar", "protein": 0.9, "carbs": 18, "fat": 4.5, "kcal": 116}, {"id": "halo-top-cookie-dough-ice-cream-70", "name": "Halo Top - Cookie Dough Ice Cream", "portion": 100, "unit": "g", "protein": 3.9, "carbs": 14, "fat": 2.6, "kcal": 76}, {"id": "party-ring-biscuit-71", "name": "Party Ring Biscuit", "portion": 1, "unit": "Biscuit", "protein": 0.3, "carbs": 4, "fat": 0.8, "kcal": 25}, {"id": "pom-bears-crisps-72", "name": "Pom- Bears Crisps", "portion": 1, "unit": "Bagel", "protein": 0, "carbs": 11.4, "fat": 5.4, "kcal": 97}, {"id": "tesco-reduced-sugar-strawberry-jam-73", "name": "Tesco Reduced Sugar Strawberry Jam", "portion": 30, "unit": "g", "protein": 0.1, "carbs": 13.3, "fat": 0, "kcal": 55}, {"id": "alpro-unsweetened-almond-milk-74", "name": "Alpro Unsweetened Almond Milk", "portion": 100, "unit": "ml", "protein": 0.1, "carbs": 2.7, "fat": 0.9, "kcal": 19}, {"id": "alpro-coconut-milk-75", "name": "Alpro Coconut Milk", "portion": 100, "unit": "ml", "protein": 0.1, "carbs": 2.7, "fat": 0.9, "kcal": 20}, {"id": "semi-skimmed-milk-76", "name": "Semi - Skimmed Milk", "portion": 100, "unit": "ml", "protein": 3.6, "carbs": 4.8, "fat": 1.8, "kcal": 50}, {"id": "highly-branched-cyclic-dextrin-77", "name": "Highly Branched Cyclic Dextrin", "portion": 1, "unit": "g", "protein": 0, "carbs": 1, "fat": 0, "kcal": 4}, {"id": "air-popped-popcorn-78", "name": "Air Popped Popcorn", "portion": 100, "unit": "g", "protein": 12.9, "carbs": 77.8, "fat": 4.5, "kcal": 387}, {"id": "fibre-one-bar-lemon-drizzle-79", "name": "Fibre One Bar - Lemon Drizzle", "portion": 1, "unit": "Bar", "protein": 0.9, "carbs": 11.2, "fat": 3.2, "kcal": 86}, {"id": "fibre-one-bar-chocolate-brownie-80", "name": "Fibre One Bar - Chocolate Brownie", "portion": 1, "unit": "Bar", "protein": 1.1, "carbs": 9.8, "fat": 3.3, "kcal": 83}, {"id": "lindt-extra-creamy-81", "name": "Lindt Extra Creamy", "portion": 100, "unit": "g", "protein": 6.4, "carbs": 51, "fat": 32, "kcal": 567}, {"id": "freddo-82", "name": "Freddo", "portion": 1, "unit": "Bar", "protein": 1.4, "carbs": 10.3, "fat": 5.4, "kcal": 95}, {"id": "mini-roll-cadbury-83", "name": "Mini Roll Cadbury", "portion": 1, "unit": "Roll", "protein": 1.3, "carbs": 13.6, "fat": 6.2, "kcal": 115}, {"id": "nutella-spread-84", "name": "Nutella Spread", "portion": 1, "unit": "Tbsp", "protein": 1.5, "carbs": 11, "fat": 5.5, "kcal": 100}, {"id": "hartleys-jelly-85", "name": "Hartleys Jelly", "portion": 1, "unit": "Potato", "protein": 0.1, "carbs": 0.4, "fat": 0.1, "kcal": 4}, {"id": "medium-banana-86", "name": "Medium Banana", "portion": 1, "unit": "Banana", "protein": 1.1, "carbs": 20.6, "fat": 0.3, "kcal": 90}, {"id": "apple-golden-delicious-87", "name": "Apple Golden Delicious", "portion": 1, "unit": "Apple", "protein": 0, "carbs": 9, "fat": 0, "kcal": 43}, {"id": "raisins-88", "name": "Raisins", "portion": 30, "unit": "g", "protein": 0.6, "carbs": 20.8, "fat": 0, "kcal": 88}, {"id": "pink-lady-apple-89", "name": "Pink Lady Apple", "portion": 1, "unit": "Apple", "protein": 0.4, "carbs": 19.1, "fat": 0.2, "kcal": 72}, {"id": "strawberries-90", "name": "Strawberries", "portion": 100, "unit": "g", "protein": 0.8, "carbs": 6, "fat": 0.1, "kcal": 30}, {"id": "blueberries-91", "name": "Blueberries", "portion": 100, "unit": "g", "protein": 0.6, "carbs": 6.9, "fat": 0.2, "kcal": 35}, {"id": "frozen-raspberries-92", "name": "Frozen Raspberries", "portion": 100, "unit": "g", "protein": 0, "carbs": 4.6, "fat": 0.2, "kcal": 31}, {"id": "frozen-blueberries-93", "name": "Frozen Blueberries", "portion": 100, "unit": "g", "protein": 0.9, "carbs": 9.1, "fat": 0, "kcal": 45}, {"id": "pineapple-94", "name": "Pineapple", "portion": 100, "unit": "g", "protein": 0.5, "carbs": 13, "fat": 0.1, "kcal": 50}, {"id": "watermelon-95", "name": "Watermelon", "portion": 100, "unit": "g", "protein": 0.4, "carbs": 6.9, "fat": 0.3, "kcal": 32}, {"id": "pear-96", "name": "Pear", "portion": 1, "unit": "Pear", "protein": 6, "carbs": 27.1, "fat": 0.2, "kcal": 101}, {"id": "avacado-97", "name": "Avacado", "portion": 100, "unit": "g", "protein": 1.9, "carbs": 1.9, "fat": 19.5, "kcal": 198}, {"id": "spinach-98", "name": "Spinach", "portion": 25, "unit": "g", "protein": 0.7, "carbs": 0.4, "fat": 0.2, "kcal": 6}, {"id": "pitted-cherries-99", "name": "Pitted Cherries", "portion": 100, "unit": "g", "protein": 0.9, "carbs": 11.5, "fat": 0.1, "kcal": 51}, {"id": "asparagus-100", "name": "Asparagus", "portion": 100, "unit": "g", "protein": 2.9, "carbs": 4.1, "fat": 0.6, "kcal": 33}, {"id": "romaine-lettuce-leaves-101", "name": "Romaine Lettuce Leaves", "portion": 100, "unit": "g", "protein": 0.8, "carbs": 0.8, "fat": 1, "kcal": 16}, {"id": "peppers-102", "name": "Peppers", "portion": 100, "unit": "g", "protein": 1, "carbs": 4.8, "fat": 0.3, "kcal": 29}, {"id": "peas-103", "name": "Peas", "portion": 100, "unit": "g", "protein": 6.2, "carbs": 15, "fat": 1, "kcal": 88}, {"id": "onion-104", "name": "Onion", "portion": 100, "unit": "g", "protein": 1.3, "carbs": 7.8, "fat": 0.2, "kcal": 38}, {"id": "chia-seeds-105", "name": "Chia Seeds", "portion": 1, "unit": "g", "protein": 0.2, "carbs": 0.1, "fat": 0.3, "kcal": 4}, {"id": "summer-fruit-mix-frozen-106", "name": "Summer Fruit Mix - Frozen", "portion": 100, "unit": "g", "protein": 1, "carbs": 6.5, "fat": 0.2, "kcal": 37}, {"id": "birds-eye-streamfresh-veg-mix-107", "name": "Birds Eye Streamfresh Veg Mix", "portion": 150, "unit": "g", "protein": 2.8, "carbs": 7.6, "fat": 5.4, "kcal": 98}, {"id": "peanut-hottie-peanut-butter-powder-108", "name": "Peanut Hottie Peanut Butter Powder", "portion": 12, "unit": "g", "protein": 4.9, "carbs": 4.7, "fat": 1.3, "kcal": 51}, {"id": "lindt-70-dark-chocolate-109", "name": "Lindt 70% Dark Chocolate", "portion": 1, "unit": "Square", "protein": 0.8, "carbs": 3.4, "fat": 4.1, "kcal": 56}, {"id": "cashew-nuts-110", "name": "Cashew Nuts", "portion": 10, "unit": "g", "protein": 2, "carbs": 2.2, "fat": 5, "kcal": 59}, {"id": "lurpack-lighter-spreadable-111", "name": "Lurpack Lighter Spreadable", "portion": 10, "unit": "g", "protein": 0, "carbs": 0, "fat": 5.7, "kcal": 52}, {"id": "quinoa-112", "name": "Quinoa", "portion": 10, "unit": "g", "protein": 1.4, "carbs": 6.4, "fat": 0.6, "kcal": 37}, {"id": "extra-virgin-olive-oil-113", "name": "Extra Virgin Olive Oil", "portion": 1, "unit": "Tbsp", "protein": 0, "carbs": 0, "fat": 14, "kcal": 120}, {"id": "walnut-oil-114", "name": "Walnut Oil", "portion": 1, "unit": "Tbsp", "protein": 0, "carbs": 0, "fat": 13.6, "kcal": 120}, {"id": "olives-115", "name": "Olives", "portion": 100, "unit": "g", "protein": 0, "carbs": 1, "fat": 2.5, "kcal": 25}, {"id": "utterly-butterly-116", "name": "Utterly Butterly", "portion": 10, "unit": "g", "protein": 0, "carbs": 0.2, "fat": 4.9, "kcal": 45}, {"id": "medium-cheese-117", "name": "Medium Cheese", "portion": 25, "unit": "g", "protein": 7, "carbs": 0.2, "fat": 5.5, "kcal": 78}, {"id": "sun-pat-smooth-peanut-butter-118", "name": "Sun-Pat Smooth Peanut Butter", "portion": 10, "unit": "g", "protein": 2.5, "carbs": 1.5, "fat": 4.8, "kcal": 61}, {"id": "roberts-half-half-119", "name": "Roberts Half & Half", "portion": 25, "unit": "g", "protein": 2.4, "carbs": 10.4, "fat": 0.3, "kcal": 57}, {"id": "smoked-streaky-bacon-120", "name": "Smoked Streaky Bacon", "portion": 1, "unit": "Slice", "protein": 5.6, "carbs": 0.2, "fat": 4.9, "kcal": 68}, {"id": "fridge-raiders-chicken-bites-121", "name": "Fridge Raiders - Chicken Bites", "portion": 1, "unit": "Pack", "protein": 19, "carbs": 5, "fat": 10, "kcal": 188}, {"id": "essential-amino-acids-122", "name": "Essential Amino Acids", "portion": 1, "unit": "g", "protein": 1, "carbs": 0, "fat": 0, "kcal": 4}, {"id": "sourdough-bread-123", "name": "Sourdough Bread", "portion": 100, "unit": "g", "protein": 8.4, "carbs": 41, "fat": 2.1, "kcal": 217}, {"id": "morrisons-skin-on-fries-124", "name": "Morrisons Skin On Fries", "portion": 100, "unit": "g", "protein": 2.4, "carbs": 29.4, "fat": 2.4, "kcal": 149}, {"id": "applied-nutrition-iso-xp-banana-125", "name": "Applied Nutrition - ISO XP Banana", "portion": 25, "unit": "g", "protein": 23.4, "carbs": 0, "fat": 0, "kcal": 90}, {"id": "semi-skimmed-milk-126", "name": "Semi-Skimmed Milk", "portion": 100, "unit": "ml", "protein": 3.6, "carbs": 4.8, "fat": 1.7, "kcal": 49}, {"id": "tesco-reduced-fat-pork-sausages-127", "name": "Tesco - Reduced Fat Pork Sausages", "portion": 2, "unit": "Sausage", "protein": 15.9, "carbs": 6.3, "fat": 7.9, "kcal": 162}, {"id": "aldi-sliced-cheddar-cheese-128", "name": "Aldi - Sliced Cheddar Cheese", "portion": 1, "unit": "Slice", "protein": 6.4, "carbs": 0.5, "fat": 8.7, "kcal": 104}, {"id": "aldi-thick-cut-bacon-129", "name": "Aldi - Thick Cut Bacon", "portion": 100, "unit": "g", "protein": 30.2, "carbs": 0, "fat": 8.8, "kcal": 212}, {"id": "tesco-turkey-sausages-130", "name": "Tesco - Turkey Sausages", "portion": 2, "unit": "Sausage", "protein": 17.4, "carbs": 8.7, "fat": 7, "kcal": 168}, {"id": "skyr-passionfruit-mango-papaya-131", "name": "Skyr Passionfruit, Mango & Papaya", "portion": 100, "unit": "g", "protein": 10.3, "carbs": 9.3, "fat": 0.4, "kcal": 87}, {"id": "aldi-bbq-chicken-mini-fillets-132", "name": "Aldi - BBQ Chicken Mini Fillets", "portion": 100, "unit": "g", "protein": 18, "carbs": 9.6, "fat": 0.9, "kcal": 121}, {"id": "tesco-southern-fried-chicken-mini-fillets-cooked-133", "name": "Tesco - Southern Fried Chicken Mini Fillets - Cooked", "portion": 136, "unit": "g", "protein": 26.3, "carbs": 21.4, "fat": 12.6, "kcal": 305}, {"id": "aldi-5-burgers-134", "name": "Aldi - 5% Burgers", "portion": 1, "unit": "Burger", "protein": 18.2, "carbs": 7, "fat": 5.6, "kcal": 173}, {"id": "aldi-skinny-meatballs-135", "name": "Aldi - Skinny Meatballs", "portion": 3, "unit": "Meatballs", "protein": 17, "carbs": 3.5, "fat": 3.7, "kcal": 117}, {"id": "asda-smoky-bbq-chicken-breast-slices-136", "name": "Asda - Smoky BBQ Chicken Breast Slices", "portion": 100, "unit": "g", "protein": 25, "carbs": 4.9, "fat": 1.7, "kcal": 137}, {"id": "aldi-skinny-pork-sausages-137", "name": "Aldi - Skinny Pork Sausages", "portion": 1, "unit": "Sausage", "protein": 10, "carbs": 3.9, "fat": 1.7, "kcal": 74}, {"id": "aldi-breaded-chicken-goujons-cooked-138", "name": "Aldi - Breaded Chicken Goujons - Cooked", "portion": 124, "unit": "g", "protein": 20, "carbs": 29, "fat": 23, "kcal": 404}, {"id": "reduced-fat-bacon-medallions-139", "name": "Reduced Fat Bacon Medallions", "portion": 2, "unit": "Medallions", "protein": 11, "carbs": 0.3, "fat": 2, "kcal": 64}, {"id": "merevale-medium-free-range-egg-140", "name": "Merevale - Medium Free Range Egg", "portion": 1, "unit": "Egg", "protein": 6.5, "carbs": 0.2, "fat": 4.5, "kcal": 68}, {"id": "trained-by-jp-iso-white-choc-raspberry-141", "name": "Trained by JP - ISO White Choc Raspberry", "portion": 30, "unit": "g", "protein": 26.4, "carbs": 0, "fat": 0, "kcal": 105}, {"id": "fage-0-greek-yoghurt-142", "name": "Fage 0% Greek Yoghurt", "portion": 100, "unit": "g", "protein": 10.3, "carbs": 3, "fat": 0, "kcal": 54}, {"id": "mature-british-cheddar-cheese-143", "name": "Mature British Cheddar Cheese", "portion": 25, "unit": "g", "protein": 6.2, "carbs": 0.1, "fat": 8.8, "kcal": 104}, {"id": "trained-by-jp-iso-choc-mint-144", "name": "Trained by JP - ISO Choc Mint", "portion": 30, "unit": "g", "protein": 25.5, "carbs": 1.3, "fat": 0.3, "kcal": 107}, {"id": "aldi-buttermilk-fish-burgers-145", "name": "Aldi - Buttermilk Fish Burgers", "portion": 1, "unit": "Burger", "protein": 16, "carbs": 12, "fat": 8.4, "kcal": 188}, {"id": "morrisons-rump-steak-146", "name": "Morrisons - Rump Steak", "portion": 100, "unit": "g", "protein": 20.7, "carbs": 0, "fat": 10.1, "kcal": 174}, {"id": "skyr-natural-yoghurt-147", "name": "Skyr Natural Yoghurt", "portion": 100, "unit": "g", "protein": 11, "carbs": 4, "fat": 0.2, "kcal": 63}, {"id": "morrisons-british-beef-meatballs-148", "name": "Morrisons - British Beef Meatballs", "portion": 100, "unit": "g", "protein": 20.4, "carbs": 3.3, "fat": 4.7, "kcal": 138}, {"id": "asda-chicken-breast-fillet-portions-149", "name": "ASDA - Chicken Breast Fillet Portions", "portion": 100, "unit": "g", "protein": 30.7, "carbs": 0, "fat": 1.7, "kcal": 138}, {"id": "morrisons-southern-fried-chicken-goujons-150", "name": "Morrisons - Southern Fried Chicken Goujons", "portion": 3, "unit": "Goujons", "protein": 11.6, "carbs": 12.9, "fat": 11.1, "kcal": 200}, {"id": "asda-turkey-burgers-151", "name": "ASDA - Turkey Burgers", "portion": 1, "unit": "Burger", "protein": 23, "carbs": 3.2, "fat": 5.8, "kcal": 157}, {"id": "tesco-reduced-fat-british-beef-burger-152", "name": "Tesco - Reduced Fat British Beef Burger", "portion": 1, "unit": "Burger", "protein": 21.7, "carbs": 6.4, "fat": 7.3, "kcal": 179}, {"id": "tesco-5-fat-steak-mince-153", "name": "Tesco - 5% Fat Steak Mince", "portion": 100, "unit": "g", "protein": 20.8, "carbs": 0, "fat": 4.5, "kcal": 124}, {"id": "tesco-large-free-range-egg-154", "name": "Tesco - Large Free Range Egg", "portion": 1, "unit": "Egg", "protein": 8.6, "carbs": 0, "fat": 6.1, "kcal": 90}, {"id": "tesco-fish-fingers-155", "name": "Tesco - Fish Fingers", "portion": 3, "unit": "Fish Fingers", "protein": 10.8, "carbs": 13.6, "fat": 6.9, "kcal": 169}, {"id": "tesco-chicken-sausages-156", "name": "Tesco - Chicken Sausages", "portion": 2, "unit": "Sausage", "protein": 19.4, "carbs": 9.5, "fat": 8.8, "kcal": 198}, {"id": "asda-breaded-cod-fillets-157", "name": "ASDA - Breaded Cod Fillets", "portion": 1, "unit": "Fillet", "protein": 16, "carbs": 21, "fat": 7.7, "kcal": 220}, {"id": "tesco-bbq-chicken-breast-pieces-158", "name": "Tesco - BBQ Chicken Breast Pieces", "portion": 100, "unit": "g", "protein": 22.8, "carbs": 5.8, "fat": 2.2, "kcal": 134}, {"id": "asda-light-lean-sausages-159", "name": "ASDA - Light & Lean Sausages", "portion": 1, "unit": "Sausage", "protein": 11, "carbs": 2.5, "fat": 1.6, "kcal": 69}, {"id": "tesco-finest-quarter-piunder-beef-burger-160", "name": "Tesco - Finest Quarter Piunder Beef Burger", "portion": 1, "unit": "Burger", "protein": 21.3, "carbs": 3.9, "fat": 11.6, "kcal": 206}, {"id": "asda-medium-free-range-egg-161", "name": "ASDA - Medium Free Range Egg", "portion": 1, "unit": "Egg", "protein": 6.4, "carbs": 0.1, "fat": 4.6, "kcal": 66}, {"id": "asda-cajun-chicken-breast-slices-162", "name": "ASDA - Cajun Chicken Breast Slices", "portion": 100, "unit": "g", "protein": 27, "carbs": 2.2, "fat": 1.6, "kcal": 131}, {"id": "grenade-carb-killa-cookie-dough-163", "name": "Grenade Carb Killa - Cookie Dough", "portion": 60, "unit": "Bar", "protein": 20.3, "carbs": 16.9, "fat": 8.9, "kcal": 218}, {"id": "aldi-southern-fried-fish-burger-164", "name": "Aldi - Southern Fried Fish Burger", "portion": 1, "unit": "Burger", "protein": 15, "carbs": 12, "fat": 8.3, "kcal": 187}, {"id": "m-s-sliced-bbq-chicken-165", "name": "M&S - Sliced BBQ Chicken", "portion": 100, "unit": "g", "protein": 28.6, "carbs": 3, "fat": 1, "kcal": 141}, {"id": "aldi-chicken-breast-mini-fillets-166", "name": "Aldi - Chicken Breast Mini Fillets", "portion": 100, "unit": "g", "protein": 24, "carbs": 0.5, "fat": 1.1, "kcal": 106}, {"id": "m-s-sweet-smoky-chicken-167", "name": "M&S - Sweet & Smoky Chicken", "portion": 100, "unit": "g", "protein": 26.4, "carbs": 2.4, "fat": 1, "kcal": 124}, {"id": "m-s-buttermilk-chicken-tenders-168", "name": "M&S - Buttermilk Chicken Tenders", "portion": 100, "unit": "g", "protein": 15.6, "carbs": 11, "fat": 11.5, "kcal": 213}, {"id": "heck-chicken-italia-sausages-169", "name": "Heck Chicken Italia Sausages", "portion": 2, "unit": "Sausage", "protein": 13, "carbs": 0.9, "fat": 2.3, "kcal": 76}, {"id": "tesco-eastman-s-chicken-tikka-170", "name": "Tesco - Eastman's Chicken Tikka", "portion": 100, "unit": "g", "protein": 24.7, "carbs": 1.2, "fat": 2.2, "kcal": 123}, {"id": "m-s-skinny-pork-sausages-171", "name": "M&S - Skinny Pork Sausages", "portion": 1, "unit": "Sausage", "protein": 11, "carbs": 4.2, "fat": 1.7, "kcal": 78}, {"id": "aldi-mexican-style-chicken-slices-172", "name": "Aldi - Mexican Style Chicken Slices", "portion": 100, "unit": "g", "protein": 25, "carbs": 2.3, "fat": 2.7, "kcal": 135}, {"id": "m-s-skinny-beef-burgers-173", "name": "M&S - Skinny Beef Burgers", "portion": 1, "unit": "Burger", "protein": 18.8, "carbs": 5.5, "fat": 2.8, "kcal": 122}, {"id": "m-s-aberdeen-angus-ribeye-174", "name": "M&S - Aberdeen Angus Ribeye", "portion": 100, "unit": "g", "protein": 21.6, "carbs": 0, "fat": 12.7, "kcal": 200}, {"id": "myprotein-clear-whey-protein-175", "name": "MyProtein - Clear Whey Protein", "portion": 30, "unit": "g", "protein": 20, "carbs": 1.1, "fat": 0.1, "kcal": 93}, {"id": "pork-steak-176", "name": "Pork Steak", "portion": 100, "unit": "g", "protein": 22, "carbs": 0, "fat": 2, "kcal": 117}, {"id": "lindahls-kvarg-177", "name": "Lindahls Kvarg", "portion": 150, "unit": "g", "protein": 16.5, "carbs": 5.1, "fat": 0.9, "kcal": 95}, {"id": "asda-3-fat-turkey-breast-steaks-178", "name": "ASDA - <3% Fat Turkey Breast Steaks", "portion": 100, "unit": "g", "protein": 36, "carbs": 0.5, "fat": 0.9, "kcal": 155}, {"id": "m-s-king-prawns-179", "name": "M&S - King Prawns", "portion": 80, "unit": "g", "protein": 14.7, "carbs": 0.1, "fat": 0.5, "kcal": 64}, {"id": "tuna-chunks-drained-180", "name": "Tuna Chunks - Drained", "portion": 100, "unit": "g", "protein": 24.9, "carbs": 0, "fat": 1, "kcal": 109}, {"id": "mattessons-fridge-raiders-181", "name": "Mattessons - Fridge Raiders", "portion": 100, "unit": "g", "protein": 21, "carbs": 5.6, "fat": 11, "kcal": 209}, {"id": "heck-chicken-burger-182", "name": "Heck Chicken Burger", "portion": 1, "unit": "Burger", "protein": 21.1, "carbs": 1.6, "fat": 3.8, "kcal": 126}, {"id": "grenade-carb-killa-protein-spread-183", "name": "Grenade Carb Killa - Protein Spread", "portion": 20, "unit": "g", "protein": 4, "carbs": 7, "fat": 7.6, "kcal": 104}, {"id": "eat-lean-protein-cheese-hard-184", "name": "Eat Lean - Protein Cheese (Hard)", "portion": 20, "unit": "g", "protein": 7.2, "carbs": 0.4, "fat": 0.6, "kcal": 35}, {"id": "mattessons-turkey-bacon-185", "name": "Mattessons - Turkey Bacon", "portion": 2, "unit": "Slices", "protein": 15, "carbs": 1, "fat": 1, "kcal": 68}, {"id": "salmon-fillet-186", "name": "Salmon Fillet", "portion": 100, "unit": "g", "protein": 25.3, "carbs": 0, "fat": 12, "kcal": 209}, {"id": "smoked-salmon-187", "name": "Smoked Salmon", "portion": 100, "unit": "g", "protein": 22.3, "carbs": 1.5, "fat": 9.9, "kcal": 185}, {"id": "steak-rump-188", "name": "Steak - Rump", "portion": 100, "unit": "g", "protein": 20.3, "carbs": 0, "fat": 10, "kcal": 171}, {"id": "steak-sirloin-189", "name": "Steak - Sirloin", "portion": 100, "unit": "g", "protein": 21.6, "carbs": 0, "fat": 12.7, "kcal": 201}, {"id": "steak-fillet-190", "name": "Steak - Fillet", "portion": 100, "unit": "g", "protein": 20.9, "carbs": 0, "fat": 7.9, "kcal": 155}, {"id": "maximuscle-protein-191", "name": "Maximuscle protein", "portion": 30, "unit": "g", "protein": 23.5, "carbs": 1.3, "fat": 1.4, "kcal": 113}, {"id": "per4m-protein-192", "name": "Per4m Protein", "portion": 100, "unit": "g", "protein": 79, "carbs": 10, "fat": 2, "kcal": 340}, {"id": "coco-pops-white-choc-193", "name": "Coco Pops - White Choc", "portion": 100, "unit": "g", "protein": 6.1, "carbs": 81, "fat": 3.2, "kcal": 385}, {"id": "tesco-micro-pilau-194", "name": "Tesco - Micro Pilau", "portion": 125, "unit": "g", "protein": 3.8, "carbs": 36.1, "fat": 2.8, "kcal": 192}, {"id": "reduced-fat-garlic-bread-195", "name": "Reduced Fat Garlic Bread", "portion": 3, "unit": "Slices", "protein": 6.7, "carbs": 44, "fat": 5, "kcal": 251}, {"id": "trained-by-jp-sustain-intra-196", "name": "Trained by JP - Sustain Intra", "portion": 30, "unit": "g", "protein": 0, "carbs": 24.7, "fat": 0.1, "kcal": 109}, {"id": "aldi-luxury-brioche-bun-197", "name": "Aldi - Luxury Brioche Bun", "portion": 1, "unit": "Bun", "protein": 4.8, "carbs": 25, "fat": 3.7, "kcal": 157}, {"id": "warburton-s-thin-bagel-198", "name": "Warburton's Thin Bagel", "portion": 1, "unit": "Thin", "protein": 5, "carbs": 25, "fat": 0.7, "kcal": 130}, {"id": "aldi-giant-buttermilk-pancake-199", "name": "Aldi - Giant Buttermilk Pancake", "portion": 1, "unit": "Pancake", "protein": 4, "carbs": 26, "fat": 3.1, "kcal": 152}, {"id": "warburton-s-potato-cakes-200", "name": "Warburton's - Potato Cakes", "portion": 1, "unit": "Cake", "protein": 2.7, "carbs": 20.6, "fat": 5.6, "kcal": 146}, {"id": "aldi-micro-pilau-201", "name": "Aldi - Micro Pilau", "portion": 125, "unit": "g", "protein": 3.9, "carbs": 41.2, "fat": 2.9, "kcal": 210}, {"id": "aldi-sourdough-crumpet-202", "name": "Aldi - Sourdough Crumpet", "portion": 1, "unit": "Crumpet", "protein": 3.3, "carbs": 21, "fat": 0.5, "kcal": 102}, {"id": "rice-krispies-203", "name": "Rice Krispies", "portion": 30, "unit": "g", "protein": 2.1, "carbs": 26, "fat": 0.4, "kcal": 116}, {"id": "supplement-needs-intra-carb-204", "name": "Supplement Needs - Intra Carb", "portion": 30, "unit": "g", "protein": 0, "carbs": 25.3, "fat": 0, "kcal": 100}, {"id": "aldi-micro-basmati-205", "name": "Aldi - Micro Basmati", "portion": 125, "unit": "g", "protein": 3.3, "carbs": 33, "fat": 2.3, "kcal": 168}, {"id": "coco-pops-206", "name": "Coco Pops", "portion": 100, "unit": "g", "protein": 6.3, "carbs": 84, "fat": 1.9, "kcal": 382}, {"id": "aldi-straight-cut-chips-207", "name": "Aldi - Straight Cut Chips", "portion": 100, "unit": "g", "protein": 3.2, "carbs": 26, "fat": 4.5, "kcal": 164}, {"id": "asda-micro-basmati-208", "name": "ASDA - Micro Basmati", "portion": 125, "unit": "g", "protein": 4, "carbs": 39, "fat": 2, "kcal": 190}, {"id": "monster-energy-pipeline-punch-209", "name": "Monster Energy - Pipeline Punch", "portion": 500, "unit": "ml", "protein": 0, "carbs": 51, "fat": 0, "kcal": 226}, {"id": "tesco-jasmine-rice-210", "name": "Tesco - Jasmine Rice", "portion": 100, "unit": "g", "protein": 2.5, "carbs": 29.1, "fat": 1, "kcal": 136}, {"id": "asda-mini-naan-bread-211", "name": "ASDA - Mini Naan Bread", "portion": 1, "unit": "Naan", "protein": 4.5, "carbs": 25.5, "fat": 3.4, "kcal": 151}, {"id": "aldi-vegan-brioche-bun-212", "name": "Aldi - Vegan Brioche Bun", "portion": 1, "unit": "Bun", "protein": 6, "carbs": 32, "fat": 4.3, "kcal": 195}, {"id": "rice-krispies-squares-choc-caramel-213", "name": "Rice Krispies Squares - Choc Caramel", "portion": 1, "unit": "Bar", "protein": 1.5, "carbs": 27, "fat": 4.5, "kcal": 153}, {"id": "asda-wholewheat-spaghetti-cooked-214", "name": "ASDA - Wholewheat Spaghetti - Cooked", "portion": 100, "unit": "g", "protein": 4.8, "carbs": 28, "fat": 0.9, "kcal": 148}, {"id": "warburton-s-crumpets-215", "name": "Warburton's - Crumpets", "portion": 1, "unit": "Crumpet", "protein": 3.3, "carbs": 19.4, "fat": 0.4, "kcal": 97}, {"id": "warburton-s-plain-bagel-216", "name": "Warburton's - Plain Bagel", "portion": 1, "unit": "Bagel", "protein": 8.5, "carbs": 39.2, "fat": 1.4, "kcal": 207}, {"id": "tesco-basmati-rice-uncooked-217", "name": "Tesco - Basmati Rice - Uncooked", "portion": 100, "unit": "g", "protein": 10.7, "carbs": 101.2, "fat": 3.2, "kcal": 479}, {"id": "tilda-lime-coriander-218", "name": "Tilda - Lime & Coriander", "portion": 125, "unit": "g", "protein": 3.1, "carbs": 29.3, "fat": 3.8, "kcal": 167}, {"id": "asda-sliced-brioche-bun-219", "name": "ASDA - Sliced Brioche Bun", "portion": 1, "unit": "Bun", "protein": 5.1, "carbs": 28, "fat": 3.3, "kcal": 164}, {"id": "tilda-sweet-chilli-lime-220", "name": "Tilda - Sweet Chilli & Lime", "portion": 125, "unit": "g", "protein": 3.3, "carbs": 30, "fat": 2.9, "kcal": 161}, {"id": "tilda-lemon-herb-221", "name": "Tilda - Lemon & Herb", "portion": 125, "unit": "g", "protein": 3.3, "carbs": 32.6, "fat": 2.8, "kcal": 172}, {"id": "mccains-lighter-home-chips-222", "name": "McCains Lighter Home Chips", "portion": 100, "unit": "g", "protein": 3.2, "carbs": 33, "fat": 3.4, "kcal": 181}, {"id": "asda-maple-syrup-pancakes-223", "name": "ASDA - Maple Syrup Pancakes", "portion": 1, "unit": "Pancake", "protein": 3.7, "carbs": 34.9, "fat": 4.4, "kcal": 197}, {"id": "tilda-coconut-chilli-lemongrass-224", "name": "Tilda - Coconut Chilli & Lemongrass", "portion": 125, "unit": "g", "protein": 3, "carbs": 26.8, "fat": 7.5, "kcal": 190}, {"id": "warburton-s-sliced-soft-white-roll-225", "name": "Warburton's - Sliced Soft White Roll", "portion": 1, "unit": "Roll", "protein": 5.3, "carbs": 25.6, "fat": 2.3, "kcal": 146}, {"id": "tilda-tomato-basil-226", "name": "Tilda - Tomato & Basil", "portion": 125, "unit": "g", "protein": 2.6, "carbs": 28, "fat": 3.1, "kcal": 154}, {"id": "tesco-linguine-227", "name": "Tesco - Linguine", "portion": 100, "unit": "g", "protein": 5.8, "carbs": 35.7, "fat": 0.7, "kcal": 176}, {"id": "trained-by-jp-cor-vanilla-228", "name": "Trained by JP - COR Vanilla", "portion": 25, "unit": "g", "protein": 1.7, "carbs": 19.3, "fat": 0.2, "kcal": 85}, {"id": "mccains-chunky-home-chips-229", "name": "McCains Chunky Home Chips", "portion": 100, "unit": "g", "protein": 2.6, "carbs": 24, "fat": 6.5, "kcal": 171}, {"id": "asda-ww-plain-wraps-230", "name": "ASDA - WW Plain Wraps", "portion": 1, "unit": "Wrap", "protein": 3.3, "carbs": 22.2, "fat": 0.8, "kcal": 118}, {"id": "kingsmill-50-50-231", "name": "Kingsmill - 50/50", "portion": 1, "unit": "Slice", "protein": 4.1, "carbs": 18.4, "fat": 1, "kcal": 103}, {"id": "tesco-brioche-burger-bun-232", "name": "Tesco - Brioche Burger Bun", "portion": 1, "unit": "Bun", "protein": 5.4, "carbs": 31.1, "fat": 1.6, "kcal": 164}, {"id": "heinz-no-added-sugar-beans-snap-pot-233", "name": "Heinz - No Added Sugar Beans Snap Pot", "portion": 200, "unit": "g", "protein": 9, "carbs": 19.5, "fat": 0.4, "kcal": 132}, {"id": "tesco-large-buttermilk-pancake-234", "name": "Tesco - Large Buttermilk Pancake", "portion": 1, "unit": "Pancake", "protein": 4.4, "carbs": 30.4, "fat": 3.9, "kcal": 176}, {"id": "sharwoods-garlic-coriander-mini-naan-235", "name": "Sharwoods - Garlic & Coriander Mini Naan", "portion": 1, "unit": "Naan", "protein": 5.2, "carbs": 33.5, "fat": 4.2, "kcal": 196}, {"id": "trained-by-jp-mps-max-236", "name": "Trained by JP - MPS Max", "portion": 18, "unit": "g", "protein": 4, "carbs": 3.7, "fat": 0.5, "kcal": 21}, {"id": "m-s-percy-pigs-237", "name": "M&S - Percy Pigs", "portion": 100, "unit": "g", "protein": 5.3, "carbs": 80.6, "fat": 0.2, "kcal": 346}, {"id": "warburton-s-sliced-brioche-burger-buns-238", "name": "Warburton's - Sliced Brioche Burger Buns", "portion": 1, "unit": "Bun", "protein": 5.5, "carbs": 26.5, "fat": 3.2, "kcal": 159}, {"id": "asda-straight-cut-chips-3-fat-239", "name": "ASDA - Straight Cut Chips (3% Fat)", "portion": 100, "unit": "g", "protein": 2.7, "carbs": 24, "fat": 2.4, "kcal": 134}, {"id": "m-s-brioche-bun-240", "name": "M&S - Brioche Bun", "portion": 1, "unit": "Bun", "protein": 7, "carbs": 31.5, "fat": 6.2, "kcal": 213}, {"id": "tilda-basmati-rice-241", "name": "Tilda - Basmati Rice", "portion": 62.5, "unit": "g", "protein": 4.9, "carbs": 48.6, "fat": 0.5, "kcal": 219}, {"id": "m-s-micro-basmati-242", "name": "M&S - Micro Basmati", "portion": 125, "unit": "g", "protein": 4.8, "carbs": 43.6, "fat": 2, "kcal": 215}, {"id": "tesco-finest-chocolate-orange-cookie-243", "name": "Tesco - Finest Chocolate Orange Cookie", "portion": 1, "unit": "Cookie", "protein": 3.4, "carbs": 41.3, "fat": 13, "kcal": 299}, {"id": "rice-krispies-squares-choc-orange-244", "name": "Rice Krispies Squares - Choc Orange", "portion": 1, "unit": "Square Bar", "protein": 1.8, "carbs": 27, "fat": 5.4, "kcal": 163}, {"id": "m-s-chunky-chips-245", "name": "M&S - Chunky Chips", "portion": 100, "unit": "g", "protein": 2.1, "carbs": 19.6, "fat": 2.9, "kcal": 119}, {"id": "asda-cheesy-mash-246", "name": "ASDA - Cheesy Mash", "portion": 100, "unit": "g", "protein": 4.1, "carbs": 13, "fat": 6.8, "kcal": 132}, {"id": "asda-frozen-hash-browns-247", "name": "ASDA - Frozen Hash Browns", "portion": 1, "unit": "Hash Brown", "protein": 0.9, "carbs": 8.5, "fat": 3.8, "kcal": 75}, {"id": "soreen-malt-loaf-248", "name": "Soreen (Malt Loaf)", "portion": 100, "unit": "g", "protein": 7.3, "carbs": 66, "fat": 1.7, "kcal": 310}, {"id": "trek-flapjack-bar-249", "name": "Trek - Flapjack Bar", "portion": 1, "unit": "Bar", "protein": 10.2, "carbs": 20.8, "fat": 9.8, "kcal": 217}, {"id": "weetabix-250", "name": "Weetabix", "portion": 2, "unit": "Biscuits", "protein": 3.5, "carbs": 23.8, "fat": 1.4, "kcal": 136}, {"id": "weetabix-minis-chocolate-chip-251", "name": "Weetabix Minis - Chocolate Chip", "portion": 50, "unit": "g", "protein": 5, "carbs": 35, "fat": 2.5, "kcal": 193}, {"id": "alpen-light-chocolate-fudge-252", "name": "Alpen Light - Chocolate & Fudge", "portion": 1, "unit": "Bar", "protein": 0.9, "carbs": 10, "fat": 1.2, "kcal": 67}, {"id": "snack-a-jacks-salt-vinegar-253", "name": "Snack A Jacks - Salt & Vinegar", "portion": 23, "unit": "g", "protein": 1.6, "carbs": 17.8, "fat": 1.7, "kcal": 93}, {"id": "fibre-one-bar-254", "name": "Fibre One Bar", "portion": 24, "unit": "g", "protein": 1.2, "carbs": 11.3, "fat": 3, "kcal": 87}, {"id": "hula-hoops-255", "name": "Hula Hoops", "portion": 24, "unit": "g", "protein": 0.8, "carbs": 15.7, "fat": 6.6, "kcal": 127}, {"id": "kelloggs-frosties-256", "name": "Kelloggs Frosties", "portion": 80, "unit": "g", "protein": 3.6, "carbs": 69.6, "fat": 0.5, "kcal": 300}, {"id": "kelloggs-corn-flakes-257", "name": "Kelloggs Corn Flakes", "portion": 80, "unit": "g", "protein": 2.9, "carbs": 51.4, "fat": 0, "kcal": 286}, {"id": "cream-of-rice-258", "name": "Cream of rice", "portion": 45, "unit": "g", "protein": 2, "carbs": 35, "fat": 0, "kcal": 150}, {"id": "quaker-rolled-oats-259", "name": "Quaker Rolled oats", "portion": 40, "unit": "g", "protein": 5, "carbs": 27, "fat": 3, "kcal": 150}, {"id": "aldi-nordpak-lighter-260", "name": "Aldi - Nordpak Lighter", "portion": 10, "unit": "g", "protein": 0.4, "carbs": 0.4, "fat": 5.7, "kcal": 52}, {"id": "aldi-moser-roth-salted-caramel-261", "name": "Aldi - Moser Roth Salted Caramel", "portion": 25, "unit": "g", "protein": 1.3, "carbs": 14, "fat": 7.6, "kcal": 133}, {"id": "aldi-moser-roth-85-262", "name": "Aldi - Moser Roth 85%", "portion": 25, "unit": "g", "protein": 2.8, "carbs": 4.5, "fat": 12.8, "kcal": 152}, {"id": "lindt-salted-caramel-dark-263", "name": "Lindt - Salted Caramel Dark", "portion": 20, "unit": "g", "protein": 0.9, "carbs": 11, "fat": 5.6, "kcal": 103}, {"id": "lotus-biscoff-crunchy-spread-264", "name": "Lotus Biscoff Crunchy Spread", "portion": 100, "unit": "g", "protein": 3.2, "carbs": 58.8, "fat": 35.7, "kcal": 571}, {"id": "lindt-85-dark-chocolate-265", "name": "Lindt - 85% Dark Chocolate", "portion": 20, "unit": "g", "protein": 2.6, "carbs": 3.8, "fat": 9.2, "kcal": 118}, {"id": "aldi-halloumi-266", "name": "Aldi - Halloumi", "portion": 100, "unit": "g", "protein": 22, "carbs": 0.9, "fat": 26, "kcal": 328}, {"id": "m-s-chilli-halloumi-kebabs-267", "name": "M&S - Chilli Halloumi Kebabs", "portion": 100, "unit": "g", "protein": 17.5, "carbs": 3.1, "fat": 23.6, "kcal": 297}, {"id": "reduced-fat-cheddar-268", "name": "Reduced Fat Cheddar", "portion": 100, "unit": "g", "protein": 30, "carbs": 0, "fat": 14, "kcal": 247}, {"id": "morrisons-avocado-smash-269", "name": "Morrisons - Avocado Smash", "portion": 50, "unit": "g", "protein": 0.8, "carbs": 1.8, "fat": 6.5, "kcal": 74}, {"id": "asda-houmous-270", "name": "ASDA - Houmous", "portion": 50, "unit": "g", "protein": 3.4, "carbs": 4.8, "fat": 14, "kcal": 161}, {"id": "peperami-271", "name": "Peperami", "portion": 1, "unit": "Bar", "protein": 6.1, "carbs": 0.6, "fat": 11, "kcal": 126}, {"id": "philadelphia-light-272", "name": "Philadelphia Light", "portion": 75, "unit": "g", "protein": 5.6, "carbs": 2.6, "fat": 10.9, "kcal": 129}, {"id": "hellmans-mayonnaise-273", "name": "Hellmans Mayonnaise", "portion": 20, "unit": "g", "protein": 0, "carbs": 0, "fat": 15.7, "kcal": 143}, {"id": "banana-274", "name": "Banana", "portion": 100, "unit": "g", "protein": 1.2, "carbs": 23.2, "fat": 0.3, "kcal": 103}, {"id": "strawberries-275", "name": "Strawberries", "portion": 100, "unit": "g", "protein": 0.8, "carbs": 6, "fat": 0.1, "kcal": 30}, {"id": "raspberries-276", "name": "Raspberries", "portion": 100, "unit": "g", "protein": 1.4, "carbs": 4.6, "fat": 0.3, "kcal": 32}, {"id": "blueberries-277", "name": "Blueberries", "portion": 100, "unit": "g", "protein": 0.7, "carbs": 14.5, "fat": 0.3, "kcal": 68}, {"id": "pineapple-278", "name": "Pineapple", "portion": 100, "unit": "g", "protein": 0.4, "carbs": 10.1, "fat": 0.2, "kcal": 46}, {"id": "mango-279", "name": "Mango", "portion": 100, "unit": "g", "protein": 0.7, "carbs": 14.1, "fat": 0.2, "kcal": 66}, {"id": "watermelon-280", "name": "Watermelon", "portion": 100, "unit": "g", "protein": 0.5, "carbs": 7.1, "fat": 0.3, "kcal": 33}, {"id": "apple-pink-lady-281", "name": "Apple - Pink Lady", "portion": 1, "unit": "Apple", "protein": 0.5, "carbs": 15.7, "fat": 0.1, "kcal": 71}, {"id": "orange-282", "name": "Orange", "portion": 100, "unit": "g", "protein": 0.8, "carbs": 8.2, "fat": 0.2, "kcal": 41}, {"id": "apple-gala-283", "name": "Apple - Gala", "portion": 1, "unit": "Apple", "protein": 0.5, "carbs": 15.7, "fat": 0.1, "kcal": 71}, {"id": "apple-granny-smith-284", "name": "Apple - Granny Smith", "portion": 1, "unit": "Apple", "protein": 0.5, "carbs": 15.7, "fat": 0.1, "kcal": 71}, {"id": "lime-285", "name": "Lime", "portion": 100, "unit": "g", "protein": 1, "carbs": 3.2, "fat": 0.3, "kcal": 20}, {"id": "pear-286", "name": "Pear", "portion": 1, "unit": "Pear", "protein": 0.4, "carbs": 13.3, "fat": 0.1, "kcal": 62}, {"id": "grapes-red-287", "name": "Grapes - Red", "portion": 100, "unit": "g", "protein": 0.6, "carbs": 17, "fat": 0.1, "kcal": 73}, {"id": "grapes-green-288", "name": "Grapes - Green", "portion": 100, "unit": "g", "protein": 0.4, "carbs": 15.4, "fat": 0.1, "kcal": 66}, {"id": "clementine-289", "name": "Clementine", "portion": 100, "unit": "g", "protein": 0.9, "carbs": 9.6, "fat": 0.2, "kcal": 47}, {"id": "satsuma-290", "name": "Satsuma", "portion": 100, "unit": "g", "protein": 0.9, "carbs": 9.6, "fat": 0.2, "kcal": 47}, {"id": "honeydew-melon-291", "name": "Honeydew Melon", "portion": 100, "unit": "g", "protein": 0.6, "carbs": 6.6, "fat": 0.1, "kcal": 31}, {"id": "red-grapefruit-292", "name": "Red Grapefruit", "portion": 100, "unit": "g", "protein": 0.8, "carbs": 6.8, "fat": 0.1, "kcal": 34}, {"id": "nectarine-293", "name": "Nectarine", "portion": 100, "unit": "g", "protein": 1.4, "carbs": 9, "fat": 0.3, "kcal": 45}, {"id": "peach-294", "name": "Peach", "portion": 100, "unit": "g", "protein": 1, "carbs": 7.6, "fat": 0.1, "kcal": 38}, {"id": "plum-295", "name": "Plum", "portion": 100, "unit": "g", "protein": 0.6, "carbs": 8.8, "fat": 0.4, "kcal": 42}, {"id": "kiwi-296", "name": "Kiwi", "portion": 100, "unit": "g", "protein": 1.1, "carbs": 10.6, "fat": 0.5, "kcal": 55}, {"id": "cantaloupe-melon-297", "name": "Cantaloupe Melon", "portion": 100, "unit": "g", "protein": 0.6, "carbs": 4.2, "fat": 0.1, "kcal": 22}, {"id": "passion-fruit-298", "name": "Passion Fruit", "portion": 100, "unit": "g", "protein": 2.6, "carbs": 5.8, "fat": 0.4, "kcal": 44}, {"id": "pomegranate-299", "name": "Pomegranate", "portion": 100, "unit": "g", "protein": 1.3, "carbs": 11.8, "fat": 0, "kcal": 59}, {"id": "tesco-grape-strawberries-pot-300", "name": "Tesco - Grape & Strawberries Pot", "portion": 125, "unit": "g", "protein": 0.8, "carbs": 17.7, "fat": 0, "kcal": 76}, {"id": "m-s-organic-blueberries-301", "name": "M&S - Organic Blueberries", "portion": 100, "unit": "g", "protein": 0.9, "carbs": 9.1, "fat": 0.2, "kcal": 40}, {"id": "m-s-berry-medley-302", "name": "M&S - Berry Medley", "portion": 240, "unit": "g", "protein": 1.7, "carbs": 26.6, "fat": 0.7, "kcal": 125}, {"id": "apricots-303", "name": "Apricots", "portion": 100, "unit": "g", "protein": 0.9, "carbs": 7.2, "fat": 0.1, "kcal": 37}, {"id": "cherries-304", "name": "Cherries", "portion": 100, "unit": "g", "protein": 0.9, "carbs": 11.5, "fat": 0.1, "kcal": 52}, {"id": "tesco-berry-medley-305", "name": "Tesco - Berry Medley", "portion": 120, "unit": "g", "protein": 0.8, "carbs": 14.7, "fat": 0, "kcal": 64}, {"id": "blackberries-306", "name": "Blackberries", "portion": 100, "unit": "g", "protein": 0.9, "carbs": 5.1, "fat": 0.2, "kcal": 32}, {"id": "courgettes-307", "name": "Courgettes", "portion": 100, "unit": "g", "protein": 1.8, "carbs": 1.8, "fat": 0.4, "kcal": 20}, {"id": "mushrooms-chestnut-308", "name": "Mushrooms - Chestnut", "portion": 100, "unit": "g", "protein": 1, "carbs": 0.3, "fat": 0.2, "kcal": 8}, {"id": "asparagus-309", "name": "Asparagus", "portion": 100, "unit": "g", "protein": 2.9, "carbs": 2, "fat": 0.6, "kcal": 29}, {"id": "carrots-310", "name": "Carrots", "portion": 100, "unit": "g", "protein": 0.5, "carbs": 7.7, "fat": 0.4, "kcal": 41}, {"id": "onion-red-311", "name": "Onion - Red", "portion": 100, "unit": "g", "protein": 1, "carbs": 8, "fat": 0.1, "kcal": 39}, {"id": "onion-brown-312", "name": "Onion - Brown", "portion": 100, "unit": "g", "protein": 1, "carbs": 8, "fat": 0.1, "kcal": 39}, {"id": "sweetcorn-cobettes-313", "name": "Sweetcorn Cobettes", "portion": 100, "unit": "g", "protein": 4.2, "carbs": 19.6, "fat": 2.3, "kcal": 120}, {"id": "mushrooms-baby-button-314", "name": "Mushrooms - Baby Button", "portion": 100, "unit": "g", "protein": 1, "carbs": 0.3, "fat": 0.2, "kcal": 8}, {"id": "broccoli-315", "name": "Broccoli", "portion": 100, "unit": "g", "protein": 4.4, "carbs": 1.8, "fat": 0.9, "kcal": 38}, {"id": "cauliflower-316", "name": "Cauliflower", "portion": 100, "unit": "g", "protein": 3.6, "carbs": 3, "fat": 0.9, "kcal": 38}, {"id": "leek-317", "name": "Leek", "portion": 100, "unit": "g", "protein": 1.6, "carbs": 2.9, "fat": 0.5, "kcal": 27}, {"id": "baby-spinach-318", "name": "Baby Spinach", "portion": 100, "unit": "g", "protein": 2.8, "carbs": 1.6, "fat": 0.8, "kcal": 29}, {"id": "aubergine-319", "name": "Aubergine", "portion": 100, "unit": "g", "protein": 0.9, "carbs": 2.2, "fat": 0.4, "kcal": 20}, {"id": "green-beans-320", "name": "Green Beans", "portion": 100, "unit": "g", "protein": 2.1, "carbs": 3.1, "fat": 0.4, "kcal": 31}, {"id": "mushrooms-closed-cup-321", "name": "Mushrooms - Closed Cup", "portion": 100, "unit": "g", "protein": 1, "carbs": 0.3, "fat": 0.2, "kcal": 8}, {"id": "cabbage-white-322", "name": "Cabbage - White", "portion": 100, "unit": "g", "protein": 2.4, "carbs": 4.1, "fat": 0.2, "kcal": 36}, {"id": "garlic-323", "name": "Garlic", "portion": 10, "unit": "g", "protein": 0.8, "carbs": 1.6, "fat": 0.1, "kcal": 11}, {"id": "ginger-324", "name": "Ginger", "portion": 15, "unit": "g", "protein": 0.2, "carbs": 1.1, "fat": 0.1, "kcal": 7}, {"id": "baby-corn-325", "name": "Baby Corn", "portion": 100, "unit": "g", "protein": 2, "carbs": 6.4, "fat": 0.3, "kcal": 42}, {"id": "beansprouts-326", "name": "Beansprouts", "portion": 100, "unit": "g", "protein": 2.5, "carbs": 2.1, "fat": 2.8, "kcal": 47}, {"id": "chilli-327", "name": "Chilli", "portion": 100, "unit": "g", "protein": 2.9, "carbs": 0.7, "fat": 0.6, "kcal": 20}, {"id": "curly-kale-328", "name": "Curly Kale", "portion": 100, "unit": "g", "protein": 3.4, "carbs": 1.4, "fat": 1.6, "kcal": 40}, {"id": "mangetout-329", "name": "Mangetout", "portion": 100, "unit": "g", "protein": 3.6, "carbs": 4.1, "fat": 0.5, "kcal": 38}, {"id": "sugar-snap-peas-330", "name": "Sugar Snap Peas", "portion": 100, "unit": "g", "protein": 3.4, "carbs": 4.8, "fat": 0.2, "kcal": 38}, {"id": "cabbage-savoy-331", "name": "Cabbage - Savoy", "portion": 100, "unit": "g", "protein": 1.7, "carbs": 4.1, "fat": 0.4, "kcal": 32}, {"id": "parnsips-332", "name": "Parnsips", "portion": 100, "unit": "g", "protein": 1.8, "carbs": 12.5, "fat": 1.1, "kcal": 76}, {"id": "pak-choi-333", "name": "Pak Choi", "portion": 100, "unit": "g", "protein": 1.5, "carbs": 2.2, "fat": 0.2, "kcal": 19}, {"id": "monster-energy-the-doctor-334", "name": "Monster Energy - The Doctor", "portion": 500, "unit": "ml", "protein": 0, "carbs": 55, "fat": 0, "kcal": 219}, {"id": "monster-energy-pipeline-punch-335", "name": "Monster Energy - Pipeline Punch", "portion": 500, "unit": "ml", "protein": 0, "carbs": 51, "fat": 0, "kcal": 226}, {"id": "monster-energy-ripper-336", "name": "Monster Energy - Ripper", "portion": 500, "unit": "ml", "protein": 0, "carbs": 46, "fat": 0, "kcal": 185}, {"id": "monster-energy-original-337", "name": "Monster Energy - Original", "portion": 500, "unit": "ml", "protein": 0, "carbs": 60, "fat": 0, "kcal": 237}, {"id": "monster-energy-mixxd-punch-338", "name": "Monster Energy - Mixxd Punch", "portion": 500, "unit": "ml", "protein": 0, "carbs": 48, "fat": 0, "kcal": 190}, {"id": "monster-energy-juiced-mango-loco-339", "name": "Monster Energy - Juiced Mango Loco", "portion": 500, "unit": "ml", "protein": 0, "carbs": 62, "fat": 0, "kcal": 245}, {"id": "monster-energy-pacific-punch-340", "name": "Monster Energy - Pacific Punch", "portion": 500, "unit": "ml", "protein": 0, "carbs": 58, "fat": 0, "kcal": 229}, {"id": "tango-orange-341", "name": "Tango - Orange", "portion": 100, "unit": "ml", "protein": 0, "carbs": 4.3, "fat": 0, "kcal": 19}, {"id": "irn-bru-342", "name": "Irn-Bru", "portion": 100, "unit": "ml", "protein": 0, "carbs": 4.8, "fat": 0, "kcal": 20}, {"id": "dr-pepper-343", "name": "Dr Pepper", "portion": 100, "unit": "ml", "protein": 0, "carbs": 4.9, "fat": 0, "kcal": 20}, {"id": "sprite-344", "name": "Sprite", "portion": 100, "unit": "ml", "protein": 0, "carbs": 3.3, "fat": 0, "kcal": 14}, {"id": "fruit-shoot-apple-blackcurrant-345", "name": "Fruit Shoot - Apple & Blackcurrant", "portion": 100, "unit": "ml", "protein": 0, "carbs": 0.8, "fat": 0, "kcal": 5}, {"id": "vimto-sparkling-346", "name": "Vimto - Sparkling", "portion": 100, "unit": "ml", "protein": 0, "carbs": 4.7, "fat": 0, "kcal": 19}, {"id": "up-light-347", "name": "Up Light", "portion": 100, "unit": "ml", "protein": 0, "carbs": 0, "fat": 0, "kcal": 2}, {"id": "vimto-no-added-sugar-348", "name": "Vimto - No Added Sugar", "portion": 100, "unit": "ml", "protein": 0, "carbs": 0.8, "fat": 0, "kcal": 4}, {"id": "rubicon-sparkling-mango-349", "name": "Rubicon Sparkling - Mango", "portion": 100, "unit": "ml", "protein": 0, "carbs": 4.7, "fat": 0, "kcal": 20}, {"id": "lilt-350", "name": "Lilt", "portion": 100, "unit": "ml", "protein": 0, "carbs": 4.6, "fat": 0, "kcal": 20}, {"id": "ting-351", "name": "Ting", "portion": 100, "unit": "ml", "protein": 0, "carbs": 3.7, "fat": 0, "kcal": 16}, {"id": "sunny-delight-orange-352", "name": "Sunny Delight Orange", "portion": 100, "unit": "ml", "protein": 0.1, "carbs": 1.5, "fat": 0, "kcal": 8}, {"id": "san-pellegrino-limonata-353", "name": "San Pellegrino - Limonata", "portion": 100, "unit": "ml", "protein": 0, "carbs": 4.7, "fat": 0, "kcal": 22}, {"id": "san-pellegrino-aranciata-354", "name": "San Pellegrino - Aranciata", "portion": 100, "unit": "ml", "protein": 0.1, "carbs": 4.7, "fat": 0, "kcal": 20}, {"id": "fresh-orange-juice-355", "name": "Fresh Orange Juice", "portion": 100, "unit": "ml", "protein": 0.4, "carbs": 10.7, "fat": 0.3, "kcal": 48}, {"id": "fresh-apple-juice-356", "name": "Fresh Apple Juice", "portion": 100, "unit": "ml", "protein": 0.1, "carbs": 5.6, "fat": 0, "kcal": 24}, {"id": "fresh-cranberry-juice-357", "name": "Fresh Cranberry Juice", "portion": 100, "unit": "ml", "protein": 0, "carbs": 4.5, "fat": 0, "kcal": 20}, {"id": "rubicon-still-mango-358", "name": "Rubicon Still - Mango", "portion": 100, "unit": "ml", "protein": 0, "carbs": 4.9, "fat": 0, "kcal": 22}, {"id": "fresh-apple-raspberry-juice-359", "name": "Fresh Apple & Raspberry Juice", "portion": 100, "unit": "ml", "protein": 0, "carbs": 2.5, "fat": 0, "kcal": 11}, {"id": "fresh-blueberry-juice-360", "name": "Fresh Blueberry Juice", "portion": 100, "unit": "ml", "protein": 0.1, "carbs": 4.4, "fat": 0, "kcal": 19}, {"id": "fresh-tropical-juice-361", "name": "Fresh Tropical Juice", "portion": 100, "unit": "ml", "protein": 0.2, "carbs": 5.4, "fat": 0, "kcal": 25}, {"id": "oat-ly-oat-milk-362", "name": "Oat-Ly Oat Milk", "portion": 100, "unit": "ml", "protein": 1, "carbs": 6.6, "fat": 3, "kcal": 59}, {"id": "yakult-363", "name": "Yakult", "portion": 100, "unit": "ml", "protein": 1.3, "carbs": 15, "fat": 0, "kcal": 66}, {"id": "alpro-unsweetened-almond-milk-364", "name": "Alpro Unsweetened Almond Milk", "portion": 100, "unit": "ml", "protein": 0.4, "carbs": 0, "fat": 1.1, "kcal": 13}, {"id": "fanta-fruit-twist-365", "name": "Fanta - Fruit Twist", "portion": 100, "unit": "ml", "protein": 0, "carbs": 4.8, "fat": 0, "kcal": 20}, {"id": "yakult-light-366", "name": "Yakult - Light", "portion": 100, "unit": "ml", "protein": 1.3, "carbs": 14, "fat": 0, "kcal": 41}, {"id": "actimel-strawberry-367", "name": "Actimel - Strawberry", "portion": 100, "unit": "g", "protein": 2.8, "carbs": 12, "fat": 1.5, "kcal": 76}, {"id": "alpro-soya-milk-368", "name": "Alpro Soya Milk", "portion": 100, "unit": "ml", "protein": 3, "carbs": 2.5, "fat": 1.8, "kcal": 39}, {"id": "fanta-orange-zero-369", "name": "Fanta - Orange Zero", "portion": 100, "unit": "ml", "protein": 0, "carbs": 0.5, "fat": 0, "kcal": 3}, {"id": "ribena-sparkling-370", "name": "Ribena - Sparkling", "portion": 100, "unit": "ml", "protein": 0.1, "carbs": 4.2, "fat": 0, "kcal": 17}, {"id": "ribena-rtd-blackcurrant-371", "name": "Ribena - RTD Blackcurrant", "portion": 100, "unit": "ml", "protein": 0.1, "carbs": 4.7, "fat": 0, "kcal": 21}, {"id": "fresh-pomegranate-juice-372", "name": "Fresh Pomegranate Juice", "portion": 100, "unit": "ml", "protein": 0.1, "carbs": 5.6, "fat": 0, "kcal": 24}, {"id": "coca-cola-373", "name": "Coca Cola", "portion": 100, "unit": "ml", "protein": 0, "carbs": 10.6, "fat": 0, "kcal": 42}, {"id": "diet-coke-374", "name": "Diet Coke", "portion": 100, "unit": "ml", "protein": 0, "carbs": 0, "fat": 0, "kcal": 0}, {"id": "coke-zero-375", "name": "Coke Zero", "portion": 100, "unit": "ml", "protein": 0, "carbs": 0, "fat": 0, "kcal": 0}, {"id": "skimmed-milk-376", "name": "Skimmed Milk", "portion": 100, "unit": "ml", "protein": 3.6, "carbs": 5, "fat": 0.1, "kcal": 35}, {"id": "semi-skimmed-milk-377", "name": "Semi-Skimmed Milk", "portion": 100, "unit": "ml", "protein": 3.6, "carbs": 4.8, "fat": 1.8, "kcal": 50}, {"id": "whole-milk-378", "name": "Whole Milk", "portion": 100, "unit": "ml", "protein": 3.5, "carbs": 4.7, "fat": 3.7, "kcal": 66}, {"id": "options-hot-chocolate-379", "name": "Options Hot Chocolate", "portion": 11, "unit": "g", "protein": 1, "carbs": 6.5, "fat": 0.8, "kcal": 40}, {"id": "tea-380", "name": "Tea", "portion": 1, "unit": "Cup", "protein": 1.8, "carbs": 2.4, "fat": 0.9, "kcal": 25}, {"id": "black-americano-381", "name": "Black Americano", "portion": 1, "unit": "Cup", "protein": 0, "carbs": 0, "fat": 0, "kcal": 0}, {"id": "white-americano-382", "name": "White Americano", "portion": 1, "unit": "Cup", "protein": 1.8, "carbs": 2.4, "fat": 0.9, "kcal": 25}, {"id": "latte-regular-383", "name": "Latte (Regular)", "portion": 1, "unit": "Cup", "protein": 8, "carbs": 10.6, "fat": 4, "kcal": 110}, {"id": "cappuccino-regular-384", "name": "Cappuccino (Regular)", "portion": 1, "unit": "Cup", "protein": 9, "carbs": 12.6, "fat": 4.2, "kcal": 120}, {"id": "flat-white-385", "name": "Flat White", "portion": 1, "unit": "Cup", "protein": 6.3, "carbs": 8.4, "fat": 3.1, "kcal": 86}, {"id": "coconut-milk-386", "name": "Coconut Milk", "portion": 100, "unit": "ml", "protein": 0.2, "carbs": 2.8, "fat": 0.8, "kcal": 20}, {"id": "vodka-387", "name": "Vodka", "portion": 25, "unit": "ml", "protein": 0, "carbs": 0, "fat": 0, "kcal": 54}, {"id": "gin-388", "name": "Gin", "portion": 25, "unit": "ml", "protein": 0, "carbs": 0, "fat": 0, "kcal": 54}, {"id": "tonic-water-slimline-389", "name": "Tonic Water - Slimline", "portion": 100, "unit": "ml", "protein": 0, "carbs": 0, "fat": 0, "kcal": 2}, {"id": "white-wine-small-glass-390", "name": "White Wine (Small Glass)", "portion": 175, "unit": "ml", "protein": 0, "carbs": 0, "fat": 0, "kcal": 120}, {"id": "white-wine-large-glass-391", "name": "White Wine (Large Glass)", "portion": 220, "unit": "ml", "protein": 0, "carbs": 0, "fat": 0, "kcal": 190}, {"id": "red-wine-small-glass-392", "name": "Red Wine (Small Glass)", "portion": 175, "unit": "ml", "protein": 0, "carbs": 0, "fat": 0, "kcal": 175}, {"id": "red-wine-large-glass-393", "name": "Red Wine (Large Glass)", "portion": 220, "unit": "ml", "protein": 0, "carbs": 0, "fat": 0, "kcal": 220}, {"id": "tonic-water-394", "name": "Tonic Water", "portion": 100, "unit": "ml", "protein": 0, "carbs": 4.9, "fat": 0, "kcal": 21}, {"id": "beer-standard-395", "name": "Beer (Standard)", "portion": 100, "unit": "ml", "protein": 0, "carbs": 0, "fat": 0, "kcal": 37}, {"id": "cider-standard-396", "name": "Cider (Standard)", "portion": 100, "unit": "ml", "protein": 0, "carbs": 0, "fat": 0, "kcal": 42}, {"id": "aioli-397", "name": "Aioli", "portion": 100, "unit": "ml", "protein": 0.7, "carbs": 3.6, "fat": 69.7, "kcal": 646}, {"id": "redcurrant-jelly-398", "name": "Redcurrant Jelly", "portion": 100, "unit": "g", "protein": 0.2, "carbs": 66.7, "fat": 0.3, "kcal": 272}, {"id": "cholula-hot-sauce-399", "name": "Cholula Hot Sauce", "portion": 100, "unit": "ml", "protein": 0.9, "carbs": 0.4, "fat": 0.9, "kcal": 19}, {"id": "lea-perrins-worcestershire-sauce-400", "name": "Lea & Perrins Worcestershire Sauce", "portion": 100, "unit": "ml", "protein": 0.8, "carbs": 21, "fat": 0.9, "kcal": 96}, {"id": "hollandaise-sauce-401", "name": "Hollandaise Sauce", "portion": 100, "unit": "g", "protein": 0.9, "carbs": 9.3, "fat": 49, "kcal": 482}, {"id": "bearnaise-sauce-402", "name": "Bearnaise Sauce", "portion": 100, "unit": "g", "protein": 1.5, "carbs": 8.1, "fat": 47, "kcal": 459}, {"id": "tartare-sauce-403", "name": "Tartare Sauce", "portion": 100, "unit": "g", "protein": 0.7, "carbs": 14.3, "fat": 37.4, "kcal": 398}, {"id": "mint-sauce-404", "name": "Mint Sauce", "portion": 100, "unit": "g", "protein": 0.9, "carbs": 17.3, "fat": 0.2, "kcal": 77}, {"id": "peppercorn-sauce-405", "name": "Peppercorn Sauce", "portion": 100, "unit": "g", "protein": 1.9, "carbs": 2.3, "fat": 4.7, "kcal": 60}, {"id": "apple-sauce-406", "name": "Apple Sauce", "portion": 100, "unit": "g", "protein": 0.2, "carbs": 27.1, "fat": 0, "kcal": 111}, {"id": "seafood-sauce-407", "name": "Seafood Sauce", "portion": 100, "unit": "ml", "protein": 1.4, "carbs": 24.3, "fat": 16.7, "kcal": 254}, {"id": "cranberry-sauce-408", "name": "Cranberry Sauce", "portion": 100, "unit": "g", "protein": 0, "carbs": 37, "fat": 0, "kcal": 152}, {"id": "garlic-sauce-409", "name": "Garlic Sauce", "portion": 100, "unit": "ml", "protein": 0.6, "carbs": 9.1, "fat": 25.4, "kcal": 268}, {"id": "nando-s-peri-peri-rub-410", "name": "Nando's - Peri-Peri Rub", "portion": 100, "unit": "g", "protein": 4.6, "carbs": 59, "fat": 3.7, "kcal": 300}, {"id": "nando-s-medium-sauce-411", "name": "Nando's - Medium Sauce", "portion": 100, "unit": "g", "protein": 0.7, "carbs": 1.1, "fat": 3.4, "kcal": 45}, {"id": "nando-s-squeezy-perinaise-412", "name": "Nando's - Squeezy Perinaise", "portion": 100, "unit": "g", "protein": 0.3, "carbs": 13, "fat": 28, "kcal": 309}, {"id": "nando-s-hot-sauce-413", "name": "Nando's - Hot Sauce", "portion": 100, "unit": "g", "protein": 0.9, "carbs": 2.4, "fat": 2.8, "kcal": 43}, {"id": "nando-s-lemon-herb-sauce-414", "name": "Nando's - Lemon & Herb Sauce", "portion": 100, "unit": "g", "protein": 0.6, "carbs": 1.2, "fat": 3.5, "kcal": 42}, {"id": "nando-s-garlic-sauce-415", "name": "Nando's - Garlic Sauce", "portion": 100, "unit": "g", "protein": 0.8, "carbs": 4.2, "fat": 3, "kcal": 49}, {"id": "nando-s-hot-perinaise-416", "name": "Nando's - Hot Perinaise", "portion": 100, "unit": "g", "protein": 0.5, "carbs": 14, "fat": 29, "kcal": 327}, {"id": "nando-s-mango-lime-marinade-417", "name": "Nando's - Mango & Lime Marinade", "portion": 100, "unit": "g", "protein": 0.7, "carbs": 26.9, "fat": 5.9, "kcal": 159}, {"id": "nando-s-peri-peri-vusa-418", "name": "Nando's - Peri-Peri Vusa", "portion": 100, "unit": "g", "protein": 2, "carbs": 5, "fat": 15.4, "kcal": 176}, {"id": "nando-s-extra-extra-hot-sauce-419", "name": "Nando's - Extra Extra Hot Sauce", "portion": 100, "unit": "g", "protein": 1.4, "carbs": 5.3, "fat": 1, "kcal": 44}, {"id": "nando-s-garlic-perinaise-420", "name": "Nando's - Garlic Perinaise", "portion": 100, "unit": "g", "protein": 0.7, "carbs": 12.4, "fat": 28.3, "kcal": 310}, {"id": "blue-dragon-sweet-chilli-sauce-421", "name": "Blue Dragon - Sweet Chilli Sauce", "portion": 100, "unit": "g", "protein": 0.6, "carbs": 55.1, "fat": 0.7, "kcal": 230}, {"id": "loyd-grossman-tomato-pasta-sauce-422", "name": "Loyd Grossman - Tomato Pasta Sauce", "portion": 100, "unit": "g", "protein": 2, "carbs": 9, "fat": 3.2, "kcal": 76}, {"id": "hp-brown-sauce-423", "name": "HP Brown Sauce", "portion": 100, "unit": "g", "protein": 0.9, "carbs": 28.3, "fat": 0.1, "kcal": 122}, {"id": "heinz-bbq-sauce-424", "name": "Heinz BBQ Sauce", "portion": 100, "unit": "g", "protein": 0.9, "carbs": 32, "fat": 0, "kcal": 138}, {"id": "blue-dragon-hoisin-sauce-425", "name": "Blue Dragon - Hoisin Sauce", "portion": 100, "unit": "ml", "protein": 2.5, "carbs": 70, "fat": 2, "kcal": 308}, {"id": "pataks-medium-balti-cooking-sauce-426", "name": "Pataks Medium Balti Cooking Sauce", "portion": 100, "unit": "g", "protein": 1.1, "carbs": 7.8, "fat": 5, "kcal": 83}, {"id": "pataks-tikka-masala-cooking-sauce-427", "name": "Pataks Tikka Masala Cooking Sauce", "portion": 100, "unit": "g", "protein": 1.4, "carbs": 8.4, "fat": 4.7, "kcal": 84}, {"id": "hellmann-s-garlic-herb-sauce-428", "name": "Hellmann's Garlic & Herb Sauce", "portion": 100, "unit": "g", "protein": 1.1, "carbs": 12, "fat": 25, "kcal": 279}, {"id": "askeys-toffee-sauce-429", "name": "Askeys Toffee Sauce", "portion": 100, "unit": "g", "protein": 1.4, "carbs": 77, "fat": 2, "kcal": 331}, {"id": "uncle-ben-s-sweet-sour-430", "name": "Uncle Ben's Sweet & Sour", "portion": 100, "unit": "g", "protein": 0.4, "carbs": 16, "fat": 0.3, "kcal": 70}, {"id": "heinz-burger-sauce-431", "name": "Heinz Burger Sauce", "portion": 100, "unit": "g", "protein": 1, "carbs": 12, "fat": 36, "kcal": 375}, {"id": "heinz-tomato-ketchup-432", "name": "Heinz Tomato Ketchup", "portion": 100, "unit": "g", "protein": 1.2, "carbs": 23.2, "fat": 0.1, "kcal": 102}, {"id": "heinz-tomato-ketchup-50-less-sugar-433", "name": "Heinz Tomato Ketchup - 50% Less Sugar", "portion": 100, "unit": "g", "protein": 1.4, "carbs": 12, "fat": 0.1, "kcal": 64}, {"id": "mayflower-curry-sauce-434", "name": "Mayflower - Curry Sauce", "portion": 100, "unit": "g", "protein": 1, "carbs": 8.3, "fat": 3.7, "kcal": 77}, {"id": "heinz-no-added-sugar-beans-snap-pot-435", "name": "Heinz - No Added Sugar Beans Snap Pot", "portion": 200, "unit": "g", "protein": 9, "carbs": 19.5, "fat": 0.4, "kcal": 132}, {"id": "m-s-golden-syrup-436", "name": "M&S - Golden Syrup", "portion": 100, "unit": "g", "protein": 0.1, "carbs": 85.3, "fat": 0.1, "kcal": 343}, {"id": "sharwoods-30-tikka-masala-sauce-437", "name": "Sharwoods - 30% Tikka Masala Sauce", "portion": 105, "unit": "g", "protein": 3, "carbs": 19.6, "fat": 8.8, "kcal": 176}, {"id": "non-starch-vegetables-of-choice-438", "name": "Non-Starch Vegetables of Choice", "portion": 100, "unit": "g", "protein": 2, "carbs": 3, "fat": 0, "kcal": 25}, {"id": "almond-butter-439", "name": "Almond Butter", "portion": 100, "unit": "g", "protein": 0.2, "carbs": 19, "fat": 56, "kcal": 614}, {"id": "dates-440", "name": "Dates", "portion": 100, "unit": "g", "protein": 2.5, "carbs": 75, "fat": 0.4, "kcal": 282}, {"id": "coco-pops-snack-bar-441", "name": "Coco Pops Snack Bar", "portion": 1, "unit": "Bar", "protein": 1.1, "carbs": 14, "fat": 2.4, "kcal": 84}, {"id": "low-fat-cereal-of-choice-442", "name": "Low Fat Cereal of Choice", "portion": 100, "unit": "g", "protein": 7, "carbs": 86, "fat": 1.2, "kcal": 387}, {"id": "beetroot-443", "name": "Beetroot", "portion": 100, "unit": "g", "protein": 1.7, "carbs": 10, "fat": 0.2, "kcal": 44}, {"id": "salt-444", "name": "Salt", "portion": 1, "unit": "g", "protein": 0, "carbs": 0, "fat": 0, "kcal": 0}, {"id": "honey-445", "name": "honey", "portion": 10, "unit": "g", "protein": 0, "carbs": 9, "fat": 0, "kcal": 90}, {"id": "coconut-oil-446", "name": "coconut oil", "portion": 10, "unit": "g", "protein": 0, "carbs": 0, "fat": 9, "kcal": 90}, {"id": "granola-447", "name": "granola", "portion": 100, "unit": "g", "protein": 10, "carbs": 68.5, "fat": 4.7, "kcal": 370}, {"id": "jam-448", "name": "Jam", "portion": 10, "unit": "g", "protein": 0, "carbs": 9, "fat": 0, "kcal": 90}]};
+
+const DAYS = DATA.days;
+const MUSCLES = DATA.muscles;
+const FOODS = DATA.foods;
+const DOW = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+const DOW_MON = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+const STORAGE_KEY = "block-log-v1";
+const ZERO_MACROS = { kcal: 0, protein: 0, carbs: 0, fat: 0 };
+
+const ICONS = {
+  settings: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>',
+  chevronLeft: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg>',
+  chevronRight: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg>',
+  chevronUp: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m18 15-6-6-6 6"/></svg>',
+  chevronDown: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>',
+  minus: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/></svg>',
+  plus: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="M12 5v14"/></svg>',
+  trash: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>',
+  check: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>',
+  dumbbell: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17.596 12.768a2 2 0 1 0 2.829-2.829l-1.768-1.767a2 2 0 0 0 2.828-2.829l-2.828-2.828a2 2 0 0 0-2.829 2.828l-1.767-1.768a2 2 0 1 0-2.829 2.829z"/><path d="m2.5 21.5 1.4-1.4"/><path d="m20.1 3.9 1.4-1.4"/><path d="M5.343 21.485a2 2 0 1 0 2.829-2.828l1.767 1.768a2 2 0 1 0 2.829-2.829l-6.364-6.364a2 2 0 1 0-2.829 2.829l1.768 1.767a2 2 0 0 0-2.828 2.829z"/><path d="m9.6 14.4 4.8-4.8"/></svg>',
+  calendar: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 2v4"/><path d="M16 2v4"/><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M3 10h18"/><path d="M8 14h.01"/><path d="M12 14h.01"/><path d="M16 14h.01"/><path d="M8 18h.01"/><path d="M12 18h.01"/><path d="M16 18h.01"/></svg>',
+  trending: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg>',
+  chart: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 3v16a2 2 0 0 0 2 2h16"/><path d="M18 17V9"/><path d="M13 17V5"/><path d="M8 17v-3"/></svg>',
+  scale: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m16 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"/><path d="m2 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"/><path d="M7 21h10"/><path d="M12 3v18"/><path d="M3 7h2c2 0 5-1 7-2 2 1 5 2 7 2h2"/></svg>',
+  utensils: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2"/><path d="M7 2v20"/><path d="M21 15V2a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3Zm0 0v7"/></svg>'
+};
+
+function esc(v) {
+  return String(v ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/"/g, "&quot;");
+}
+
+function pad2(n) { return String(n).padStart(2, "0"); }
+
+function parseDate(s) {
+  const [y, m, d] = String(s).split("-").map(Number);
+  return new Date(y, m - 1, d);
+}
+
+function fmtISO(d) {
+  return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
+}
+
+function today() { return fmtISO(new Date()); }
+
+function addDays(s, n) {
+  const d = parseDate(s);
+  d.setDate(d.getDate() + n);
+  return fmtISO(d);
+}
+
+function fmtEEE(s) {
+  const d = parseDate(s);
+  return `${DOW[d.getDay()]} ${d.getDate()} ${MONTHS[d.getMonth()]}`;
+}
+
+function weekday(s) { return parseDate(s).getDay(); }
+
+function diffDays(a, b) {
+  const da = parseDate(a), db = parseDate(b);
+  da.setHours(0, 0, 0, 0);
+  db.setHours(0, 0, 0, 0);
+  return Math.round((da - db) / 86400000);
+}
+
+function weekNumber(start, current) {
+  return Math.floor(Math.max(0, diffDays(current, start)) / 7) + 1;
+}
+
+function isDeload(week) { return week === 5 || week === 6; }
+
+function mondayOf(s) {
+  const t = weekday(s);
+  return addDays(s, t === 0 ? -6 : 1 - t);
+}
+
+function dayById(id) {
+  const d = DAYS.find((x) => x.id === id);
+  if (!d) throw new Error("Unknown day " + id);
+  return d;
+}
+
+function dayByWeekday(wd) {
+  const d = DAYS.find((x) => x.weekday === wd);
+  if (!d) throw new Error("No day for weekday " + wd);
+  return d;
+}
+
+function defaultMeals() {
+  return Array.from({ length: 6 }, (_, i) => ({ id: `meal-${i + 1}`, name: `Meal ${i + 1}`, items: [] }));
+}
+
+function normalizeMeals(raw) {
+  const base = defaultMeals();
+  if (!Array.isArray(raw)) return base;
+  return base.map((slot, i) => {
+    const r = raw.find((x) => x.id === slot.id) ?? raw[i];
+    if (!r) return slot;
+    const name = typeof r.name === "string" ? r.name : slot.name;
+    const items = Array.isArray(r.items)
+      ? r.items.filter((x) => x && typeof x.id === "string" && typeof x.foodId === "string" && Number.isFinite(x.grams))
+      : [];
+    return { id: slot.id, name, items };
+  });
+}
+
+function emptySet() { return { weight: "", reps: "", done: false }; }
+
+function sessionId(dayId, date) { return `${dayId}:${date}`; }
+
+function parseNum(v) {
+  const t = String(v).trim().replace(",", ".");
+  if (!t) return null;
+  const n = Number(t);
+  return Number.isFinite(n) ? n : null;
+}
+
+function adjustWeight(value, step) {
+  const n = parseNum(value) ?? 0;
+  const r = Math.max(0, Math.round((n + step) * 4) / 4);
+  return String(r);
+}
+
+function weightStep(unit) { return unit === "kg" ? 2.5 : 5; }
+
+function bestSet(entries) {
+  let best = null;
+  for (const e of entries ?? []) {
+    const w = parseNum(e.weight);
+    const r = parseNum(e.reps);
+    if (w == null || w <= 0) continue;
+    if (!best || w > best.weight || (w === best.weight && (r ?? 0) > best.reps)) {
+      best = { weight: w, reps: r ?? 0 };
+    }
+  }
+  return best;
+}
+
+function sessionVolume(session) {
+  let t = 0;
+  for (const sets of Object.values(session.sets)) {
+    for (const e of sets) {
+      if (!e.done) continue;
+      const w = parseNum(e.weight), r = parseNum(e.reps);
+      if (w != null && r != null) t += w * r;
+    }
+  }
+  return t;
+}
+
+function isLogged(session) {
+  if (session.finished) return true;
+  return Object.values(session.sets).some((sets) =>
+    sets.some((e) => e.done || e.weight.trim() !== "" || e.reps.trim() !== "")
+  );
+}
+
+function doneCount(session) {
+  return Object.values(session.sets).reduce((n, sets) => n + sets.filter((e) => e.done).length, 0);
+}
+
+function setRanges(ex) {
+  return Array.from({ length: Math.max(1, ex.sets) }, (_, i) => ex.setReps?.[i] ?? ex.reps);
+}
+
+function planFor(dayId, plans) {
+  return plans[dayId] ?? dayById(dayId).exercises;
+}
+
+function clonePlan(dayId, plans) {
+  return planFor(dayId, plans).map((e) => ({ ...e, muscles: e.muscles ? [...e.muscles] : [], setReps: e.setReps ? [...e.setReps] : undefined }));
+}
+
+function findExercise(id, plans, library) {
+  for (const day of DAYS) {
+    const hit = (plans[day.id] ?? day.exercises).find((e) => e.id === id);
+    if (hit) return hit;
+  }
+  if (library[id]) return library[id];
+  for (const day of DAYS) {
+    const hit = day.exercises.find((e) => e.id === id);
+    if (hit) return hit;
+  }
+}
+
+function exerciseMuscles(ex) {
+  if (ex.muscles?.length) return ex.muscles;
+  for (const day of DAYS) {
+    const n = day.exercises.find((t) => t.id === ex.id);
+    if (n?.muscles?.length) return n.muscles;
+  }
+  return [];
+}
+
+function fitSets(existing, count) {
+  const n = (existing ?? []).slice(0, count);
+  while (n.length < count) n.push(emptySet());
+  return n;
+}
+
+function newSession(dayId, exercises, date, unit) {
+  const sets = {};
+  for (const ex of exercises) sets[ex.id] = Array.from({ length: ex.sets }, () => emptySet());
+  return { id: sessionId(dayId, date), dayId, date, unit, sets, finished: false, updatedAt: Date.now() };
+}
+
+function previousSession(sessions, dayId, date) {
+  return sessions
+    .filter((s) => s.dayId === dayId && s.date < date && isLogged(s))
+    .sort((a, b) => (a.date < b.date ? 1 : -1))[0];
+}
+
+function liftPoints(sessions, exerciseId) {
+  return sessions
+    .filter(isLogged)
+    .slice()
+    .sort((a, b) => (a.date < b.date ? -1 : 1))
+    .flatMap((s) => {
+      const best = bestSet(s.sets[exerciseId]);
+      return best ? [{ label: fmtEEE(s.date), weight: best.weight, reps: best.reps, unit: s.unit }] : [];
+    });
+}
+
+function csvEscape(v) {
+  const t = String(v);
+  return /[",\n]/.test(t) ? `"${t.replaceAll('"', '""')}"` : t;
+}
+
+function foodById(id, custom) {
+  return custom.find((f) => f.id === id) ?? FOODS.find((f) => f.id === id);
+}
+
+function scaleMacros(food, grams) {
+  const portion = food.portion > 0 ? food.portion : 100;
+  const r = (Number.isFinite(grams) ? grams : 0) / portion;
+  return { kcal: food.kcal * r, protein: food.protein * r, carbs: food.carbs * r, fat: food.fat * r };
+}
+
+function addMacros(a, b) {
+  return { kcal: a.kcal + b.kcal, protein: a.protein + b.protein, carbs: a.carbs + b.carbs, fat: a.fat + b.fat };
+}
+
+function mealMacros(meal, custom) {
+  return meal.items.reduce((acc, item) => {
+    const food = foodById(item.foodId, custom);
+    return food ? addMacros(acc, scaleMacros(food, item.grams)) : acc;
+  }, { ...ZERO_MACROS });
+}
+
+function fmtMacro(n, whole) {
+  if (!Number.isFinite(n)) return "0";
+  const v = whole ? Math.round(n) : Math.round(n * 10) / 10;
+  return Number.isInteger(v) ? String(v) : v.toFixed(1);
+}
+
+function avg(arr) {
+  return arr.length ? arr.reduce((a, b) => a + b, 0) / arr.length : null;
+}
+
+function fmtAvg(n, digits = 1) {
+  if (n == null) return "—";
+  const f = 10 ** digits;
+  const r = Math.round(n * f) / f;
+  return Number.isInteger(r) ? String(r) : r.toFixed(digits);
+}
+
+function weekRangeLabel(monday) {
+  const start = parseDate(monday);
+  const end = parseDate(addDays(monday, 6));
+  if (start.getMonth() === end.getMonth()) return `${start.getDate()}–${end.getDate()} ${MONTHS[end.getMonth()]}`;
+  return `${start.getDate()} ${MONTHS[start.getMonth()]} – ${end.getDate()} ${MONTHS[end.getMonth()]}`;
+}
+
+function checkInWeeks(weights, checkIns, todayStr) {
+  const end = mondayOf(todayStr);
+  let start = addDays(end, -49);
+  for (const key of [...Object.keys(weights), ...Object.keys(checkIns)]) {
+    if (!weights[key]?.trim() && !checkIns[key]) continue;
+    const d = mondayOf(key);
+    if (d < start) start = d;
+  }
+  const weeks = [];
+  for (let d = end; d >= start; d = addDays(d, -7)) weeks.push(d);
+  return weeks;
+}
+
+function volumeRows(plans) {
+  const map = new Map();
+  for (const m of MUSCLES) map.set(m.id, []);
+  const unassigned = [];
+  for (const day of DAYS) {
+    if (day.rest) continue;
+    const exercises = plans[day.id] ?? day.exercises;
+    for (const ex of exercises) {
+      const muscles = exerciseMuscles(ex);
+      const src = { dayId: day.id, day: day.short, exerciseId: ex.id, name: ex.name, sets: ex.sets };
+      if (!muscles.length) unassigned.push(src);
+      else for (const m of muscles) map.get(m)?.push(src);
+    }
+  }
+  return {
+    rows: MUSCLES.map((m) => {
+      const sources = map.get(m.id) ?? [];
+      return { id: m.id, name: m.name, sets: sources.reduce((n, s) => n + s.sets, 0), sources };
+    }),
+    unassigned
+  };
+}
+
+function defaultStore() {
+  return {
+    unit: "kg",
+    startDate: today(),
+    sessions: [],
+    plans: {},
+    library: {},
+    weights: {},
+    customFoods: [],
+    meals: defaultMeals(),
+    checkIns: {}
+  };
+}
+
+function loadStore() {
+  const store = defaultStore();
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return store;
+    const parsed = JSON.parse(raw);
+    const st = parsed?.state ?? parsed;
+    if (!st || typeof st !== "object") return store;
+    if (st.unit === "kg" || st.unit === "lb") store.unit = st.unit;
+    if (typeof st.startDate === "string" && /^\d{4}-\d{2}-\d{2}$/.test(st.startDate)) store.startDate = st.startDate;
+    if (Array.isArray(st.sessions)) store.sessions = st.sessions;
+    if (st.plans && typeof st.plans === "object") store.plans = st.plans;
+    if (st.library && typeof st.library === "object") store.library = st.library;
+    if (st.weights && typeof st.weights === "object") store.weights = st.weights;
+    if (Array.isArray(st.customFoods)) store.customFoods = st.customFoods;
+    store.meals = normalizeMeals(st.meals);
+    if (st.checkIns && typeof st.checkIns === "object") store.checkIns = st.checkIns;
+  } catch (err) {}
+  return store;
+}
+
+function persist() {
+  const state = {
+    unit: store.unit,
+    startDate: store.startDate,
+    sessions: store.sessions,
+    plans: store.plans,
+    library: store.library,
+    weights: store.weights,
+    customFoods: store.customFoods,
+    meals: store.meals,
+    checkIns: store.checkIns
+  };
+  localStorage.setItem(STORAGE_KEY, JSON.stringify({ state, version: 0 }));
+}
+
+function upsertSession(session) {
+  const i = store.sessions.findIndex((s) => s.id === session.id);
+  if (i === -1) store.sessions.push(session);
+  else store.sessions[i] = session;
+}
+
+function shouldPersistSession(session) {
+  const dirty = Object.values(session.sets).some((sets) =>
+    sets.some((e) => e.done || e.weight.trim() || e.reps.trim())
+  );
+  return dirty || session.finished || store.sessions.some((s) => s.id === session.id);
+}
+
+function saveSession(session) {
+  current = { ...session, updatedAt: Date.now() };
+  if (shouldPersistSession(current)) {
+    upsertSession(current);
+    persist();
+  }
+}
+
+function patchSet(exerciseId, index, patch) {
+  if (!current) return;
+  const sets = { ...current.sets };
+  sets[exerciseId] = (sets[exerciseId] ?? []).map((e, i) => (i === index ? { ...e, ...patch } : e));
+  saveSession({ ...current, sets });
+}
+
+let store = loadStore();
+let ui = {
+  tab: "train",
+  date: today(),
+  dayId: dayByWeekday(weekday(today())).id,
+  settings: false,
+  logOpen: null,
+  liftId: null,
+  addName: "",
+  addSets: 3,
+  addReps: "8–12",
+  addMuscles: [],
+  mealOpen: null,
+  mealQuery: "",
+  mealAmount: "",
+  newFoodOpen: false,
+  newFood: { name: "", kcal: "", protein: "", carbs: "", fat: "" },
+  volumeOpen: "quads"
+};
+let current = null;
+
+function ensureSession() {
+  const day = dayById(ui.dayId);
+  const exercises = planFor(ui.dayId, store.plans);
+  if (day.rest) {
+    current = null;
+    return;
+  }
+  const id = sessionId(ui.dayId, ui.date);
+  const existing = store.sessions.find((s) => s.id === id);
+  if (existing) {
+    const sets = {};
+    for (const ex of exercises) sets[ex.id] = fitSets(existing.sets[ex.id], ex.sets);
+    current = { ...existing, sets };
+    return;
+  }
+  current = newSession(ui.dayId, exercises, ui.date, store.unit);
+}
+
+function addExercise() {
+  const name = ui.addName.trim();
+  if (!name || ui.addMuscles.length === 0) return;
+  const sets = Math.min(10, Math.max(1, Math.round(ui.addSets) || 1));
+  const reps = ui.addReps.trim() || "8–12";
+  const ex = { id: `custom-${crypto.randomUUID()}`, name, sets, reps, muscles: [...ui.addMuscles] };
+  const plan = clonePlan(ui.dayId, store.plans);
+  plan.push(ex);
+  store.plans = { ...store.plans, [ui.dayId]: plan };
+  store.library = { ...store.library, [ex.id]: ex };
+  if (current) {
+    saveSession({ ...current, sets: { ...current.sets, [ex.id]: Array.from({ length: ex.sets }, () => emptySet()) } });
+  }
+  ui.addName = "";
+  persist();
+}
+
+function removeExercise(id) {
+  const plan = clonePlan(ui.dayId, store.plans).filter((e) => e.id !== id);
+  const found = planFor(ui.dayId, store.plans).find((e) => e.id === id);
+  store.plans = { ...store.plans, [ui.dayId]: plan };
+  if (found) store.library = { ...store.library, [found.id]: found };
+  if (current) {
+    const sets = { ...current.sets };
+    delete sets[id];
+    saveSession({ ...current, sets });
+  }
+  persist();
+}
+
+function moveExercise(id, delta) {
+  const plan = clonePlan(ui.dayId, store.plans);
+  const i = plan.findIndex((e) => e.id === id);
+  const j = i + delta;
+  if (i < 0 || j < 0 || j >= plan.length) return;
+  const [item] = plan.splice(i, 1);
+  plan.splice(j, 0, item);
+  store.plans = { ...store.plans, [ui.dayId]: plan };
+  persist();
+  requestAnimationFrame(() => document.getElementById(`exercise-${id}`)?.scrollIntoView({ block: "nearest" }));
+}
+
+function updateExercise(id, patch) {
+  let updated;
+  const plan = clonePlan(ui.dayId, store.plans).map((ex) => {
+    if (ex.id !== id) return ex;
+    const sets = patch.sets == null ? ex.sets : Math.min(12, Math.max(1, Math.round(patch.sets) || ex.sets));
+    const reps = patch.reps == null ? ex.reps : patch.reps;
+    let ranges = setRanges(ex);
+    if (patch.reps != null && patch.reps !== ex.reps) ranges = ranges.map((r) => (r === ex.reps ? patch.reps : r));
+    if (patch.setIndex != null && patch.setRange != null && patch.setIndex >= 0) ranges[patch.setIndex] = patch.setRange;
+    if (sets > ranges.length) {
+      const fill = ranges[ranges.length - 1] || reps || "8–12";
+      ranges = ranges.concat(Array.from({ length: sets - ranges.length }, () => fill));
+    } else if (sets < ranges.length) ranges = ranges.slice(0, sets);
+    const setReps = ranges.every((r) => r === reps) ? undefined : ranges;
+    const muscles = patch.muscles ?? ex.muscles;
+    updated = { ...ex, sets, reps, setReps, muscles };
+    return updated;
+  });
+  if (!updated) return;
+  store.plans = { ...store.plans, [ui.dayId]: plan };
+  store.library = { ...store.library, [updated.id]: updated };
+  if (current && patch.sets != null) {
+    saveSession({ ...current, sets: { ...current.sets, [id]: fitSets(current.sets[id], updated.sets) } });
+  }
+  persist();
+}
+
+function copyLast() {
+  const prev = previousSession(store.sessions, ui.dayId, ui.date);
+  if (!current || !prev) return;
+  const exercises = planFor(ui.dayId, store.plans);
+  const sets = {};
+  for (const ex of exercises) {
+    const prevSets = prev.sets[ex.id] ?? [];
+    sets[ex.id] = (current.sets[ex.id] ?? []).map((row, i) => {
+      if (row.weight.trim() || row.reps.trim()) return row;
+      const p = prevSets[i];
+      return p ? { ...row, weight: p.weight, reps: p.reps } : row;
+    });
+  }
+  saveSession({ ...current, sets });
+}
+
+function exportCsv() {
+  const lines = [["Date", "Session", "Exercise", "Set", "Weight", "Unit", "Reps", "Done", "Target"].join(",")];
+  const sessions = store.sessions.filter(isLogged).slice().sort((a, b) => (a.date < b.date ? -1 : 1));
+  for (const session of sessions) {
+    const day = DAYS.find((d) => d.id === session.dayId);
+    if (!day) continue;
+    const ids = planFor(session.dayId, store.plans).map((e) => e.id);
+    const all = [...ids, ...Object.keys(session.sets).filter((id) => !ids.includes(id))];
+    for (const id of all) {
+      const entries = session.sets[id] ?? [];
+      const ex = findExercise(id, store.plans, store.library);
+      entries.forEach((row, i) => {
+        if (!(row.weight.trim() || row.reps.trim() || row.done)) return;
+        const target = ex ? (setRanges(ex)[i] || ex.reps) : "";
+        lines.push([session.date, day.name, ex?.name ?? "Exercise", i + 1, row.weight, session.unit, row.reps, row.done ? "yes" : "no", target].map(csvEscape).join(","));
+      });
+    }
+  }
+  const blob = new Blob([lines.join("\n")], { type: "text/csv;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "block-log.csv";
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+}
+
+function macrosBlock(m) {
+  return `<div>
+    <p class="macro-grid-title"></p>
+    <p class="kcal-sm" style="margin:0;font-family:var(--font-display);font-size:1.85rem;line-height:1;font-variant-numeric:tabular-nums">${esc(fmtMacro(m.kcal, true))}<span class="kcal"><span style="margin-left:.5rem;font-family:var(--font-sans);font-size:.875rem;color:var(--muted)">kcal</span></span></p>
+    <div class="macro-grid" style="margin-top:.75rem">
+      ${macroCell("Protein", m.protein)}${macroCell("Carbs", m.carbs)}${macroCell("Fat", m.fat)}
+    </div>
+  </div>`;
+}
+
+function macroCell(label, value) {
+  return `<div><p class="macro-l">${esc(label)}</p><p class="macro-v">${esc(fmtMacro(value))}<span>g</span></p></div>`;
+}
+
+function renderHeader() {
+  return `<header class="header">
+    <div>
+      <p class="brand-kicker">Block</p>
+      <div class="brand-rule"></div>
+      <p class="brand-sub">Classic mass · ${esc(store.unit)}</p>
+    </div>
+    <button type="button" class="icon-btn" aria-label="Settings" data-act="settings">${ICONS.settings}</button>
+  </header>`;
+}
+
+function renderTabs() {
+  const tabs = [
+    ["train", "Train", ICONS.dumbbell],
+    ["log", "Log", ICONS.calendar],
+    ["lifts", "Lifts", ICONS.trending],
+    ["volume", "Volume", ICONS.chart],
+    ["weight", "Check-in", ICONS.scale],
+    ["meals", "Meals", ICONS.utensils]
+  ];
+  return `<nav class="tabbar"><div class="tabbar-inner">${tabs.map(([id, label, icon]) =>
+    `<button type="button" class="tab${ui.tab === id ? " active" : ""}" data-tab="${id}">${icon}${esc(label)}</button>`
+  ).join("")}</div></nav>`;
+}
+
+function renderTrain() {
+  ensureSession();
+  const day = dayById(ui.dayId);
+  const exercises = planFor(ui.dayId, store.plans);
+  const week = weekNumber(store.startDate, ui.date);
+  const deload = isDeload(week);
+  const scheduledId = dayByWeekday(weekday(ui.date)).id;
+  const isToday = ui.date === today();
+  const total = exercises.reduce((n, e) => n + e.sets, 0);
+  const done = current ? doneCount(current) : 0;
+  const prev = previousSession(store.sessions, ui.dayId, ui.date);
+  const step = weightStep(current?.unit ?? store.unit);
+
+  const chips = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"].map((_, i) => {
+    const d = dayByWeekday(i === 6 ? 0 : i + 1);
+    const active = d.id === ui.dayId;
+    const meta = d.id === scheduledId && isToday ? "Today" : d.rest ? "Off" : "·";
+    return `<button type="button" class="chip${active ? " active" : ""}" data-act="chip" data-id="${esc(d.id)}"><span class="name">${esc(d.short)}</span><span class="meta">${esc(meta)}</span></button>`;
+  }).join("");
+
+  let body = "";
+  if (day.rest) {
+    body = `<div class="rest-card"><h3>No session</h3><p>If you still train, pick Push, Pull, Legs, Quads, or Back above.</p></div>`;
+  } else if (current) {
+    const copy = prev
+      ? `<button type="button" class="copy-last" data-act="copy-last">Copy last ${esc(day.short.toLowerCase())}${prev.unit === current.unit ? "" : ` (${esc(prev.unit)})`}</button>`
+      : "";
+    const cards = exercises.map((ex, idx) => renderExercise(ex, idx + 1, exercises.length, current.sets[ex.id] ?? [], prev?.sets[ex.id], prev?.unit, step, current.unit)).join("");
+    const addMuscles = MUSCLES.map((m) => {
+      const on = ui.addMuscles.includes(m.id);
+      return `<button type="button" class="pill${on ? " on" : ""}" aria-pressed="${on}" data-act="toggle-muscle" data-id="${esc(m.id)}">${esc(m.name)}</button>`;
+    }).join("");
+    body = `${copy}
+      <div class="stack-3">${cards}</div>
+      <form class="card ex add-ex" data-act="add-ex">
+        <p>Add exercise</p>
+        <input class="field mt-2" value="${esc(ui.addName)}" placeholder="Exercise name" aria-label="Exercise name" data-keep="addName">
+        <div class="set-ctrl">
+          <button type="button" class="icon-btn solid" aria-label="Fewer sets" data-act="add-sets" data-delta="-1">${ICONS.minus}</button>
+          <span class="set-count">${ui.addSets} sets</span>
+          <button type="button" class="icon-btn solid" aria-label="More sets" data-act="add-sets" data-delta="1">${ICONS.plus}</button>
+          <input class="field center" value="${esc(ui.addReps)}" aria-label="Rep range" data-keep="addReps">
+        </div>
+        <div class="muscle-row">${addMuscles}</div>
+        <button type="submit" class="btn-primary mt-3" ${!ui.addName.trim() || ui.addMuscles.length === 0 ? "disabled" : ""}>Add to ${esc(day.short)}</button>
+      </form>
+      <button type="button" class="btn-primary ${current.finished ? "btn-ghost done-session" : ""}" data-act="finish">${current.finished ? "Logged" : "Mark session done"}</button>`;
+  }
+
+  return `<div class="stack">
+    <div class="date-nav">
+      <button type="button" class="icon-btn solid" aria-label="Previous day" data-act="prev-day">${ICONS.chevronLeft}</button>
+      <div class="date-center">
+        <p class="date-title">${esc(fmtEEE(ui.date))}</p>
+        <p class="date-sub">Week ${week}${deload ? " · deload" : ""}</p>
+      </div>
+      <button type="button" class="icon-btn solid" aria-label="Next day" data-act="next-day">${ICONS.chevronRight}</button>
+    </div>
+    <div class="chips">${chips}</div>
+    ${deload ? `<p class="banner">Deload window. Cut about a third of the sets and stay at 3 reps in reserve. Next block, add weight and go back to these sets.</p>` : ""}
+    <div>
+      <div class="session-head">
+        <h2 class="session-title">${esc(day.name)}</h2>
+        ${day.rest ? "" : `<p class="progress">${done}/${total}</p>`}
+      </div>
+      <p class="note">${esc(day.note)}</p>
+    </div>
+    ${body}
+  </div>`;
+}
+
+function renderExercise(ex, index, total, entries, previous, previousUnit, step, unit) {
+  const ranges = setRanges(ex);
+  const lastBits = (previous ?? []).map((e) => (!e.weight.trim() && !e.reps.trim() ? null : `${e.weight || "—"}×${e.reps || "—"}`)).filter(Boolean);
+  const lastLine = lastBits.length ? `<p class="last-time">Last time ${esc(lastBits.join("  ·  "))}${previousUnit ? ` ${esc(previousUnit)}` : ""}</p>` : "";
+  const rows = entries.map((row, i) => {
+    const prev = previous?.[i];
+    const last = prev && (prev.weight.trim() || prev.reps.trim()) ? `Last ${prev.weight || "—"}-${previousUnit ? ` ${previousUnit}` : ""} × ${prev.reps || "—"}`.replace("- ", "") : null;
+    const lastPretty = prev && (prev.weight.trim() || prev.reps.trim()) ? `Last ${prev.weight || "—"}${previousUnit ? ` ${previousUnit}` : ""} × ${prev.reps || "—"}` : null;
+    const target = ranges[i] ?? ex.reps;
+    return `<div class="set">
+      <div class="set-target">
+        <span class="set-n">${i + 1}</span>
+        <label class="target-wrap"><span class="lbl">Target</span><input value="${esc(target)}" aria-label="Set ${i + 1} target reps" data-keep="target" data-ex="${esc(ex.id)}" data-i="${i}"></label>
+      </div>
+      <div class="set-row">
+        <span class="set-n"></span>
+        <button type="button" class="icon-btn solid" aria-label="Decrease set ${i + 1} weight" data-act="weight" data-ex="${esc(ex.id)}" data-i="${i}" data-delta="${-step}">${ICONS.minus}</button>
+        <label class="weight-lab"><span class="sr-only">Set ${i + 1} weight in ${esc(unit)}</span><input class="weight-input" inputmode="decimal" value="${esc(row.weight)}" placeholder="0" aria-label="Set ${i + 1} weight" data-keep="weight" data-ex="${esc(ex.id)}" data-i="${i}"></label>
+        <button type="button" class="icon-btn solid" aria-label="Increase set ${i + 1} weight" data-act="weight" data-ex="${esc(ex.id)}" data-i="${i}" data-delta="${step}">${ICONS.plus}</button>
+        <label class="reps-lab"><span class="sr-only">Set ${i + 1} reps</span><input class="reps-input" inputmode="numeric" value="${esc(row.reps)}" placeholder="–" aria-label="Set ${i + 1} reps" data-keep="reps" data-ex="${esc(ex.id)}" data-i="${i}"></label>
+        <button type="button" class="done-btn${row.done ? " on" : ""}" aria-label="${row.done ? "Undo set" : "Complete set"} ${i + 1}" aria-pressed="${row.done}" data-act="toggle-done" data-ex="${esc(ex.id)}" data-i="${i}">${ICONS.check}</button>
+        ${lastPretty ? `<span class="sr-only">${esc(lastPretty)}</span>` : ""}
+      </div>
+    </div>`;
+  }).join("");
+
+  return `<section class="card ex" id="exercise-${esc(ex.id)}">
+    <div class="ex-top">
+      <h3 class="ex-name"><span class="ex-idx">${index}</span>${esc(ex.name)}</h3>
+      <div class="ex-actions">
+        <button type="button" class="icon-btn solid" aria-label="Move ${esc(ex.name)} up" ${index === 1 ? "disabled" : ""} data-act="move" data-ex="${esc(ex.id)}" data-delta="-1">${ICONS.chevronUp}</button>
+        <button type="button" class="icon-btn solid" aria-label="Move ${esc(ex.name)} down" ${index === total ? "disabled" : ""} data-act="move" data-ex="${esc(ex.id)}" data-delta="1">${ICONS.chevronDown}</button>
+        <button type="button" class="icon-btn solid" aria-label="Remove ${esc(ex.name)}" data-act="remove" data-ex="${esc(ex.id)}">${ICONS.trash}</button>
+      </div>
+    </div>
+    ${ex.cue ? `<p class="cue">${esc(ex.cue)}</p>` : ""}
+    <div class="set-ctrl">
+      <button type="button" class="icon-btn solid" aria-label="Remove a set from ${esc(ex.name)}" ${ex.sets <= 1 ? "disabled" : ""} data-act="adj-sets" data-ex="${esc(ex.id)}" data-delta="-1">${ICONS.minus}</button>
+      <span class="set-count">${ex.sets} sets</span>
+      <button type="button" class="icon-btn solid" aria-label="Add a set to ${esc(ex.name)}" ${ex.sets >= 12 ? "disabled" : ""} data-act="adj-sets" data-ex="${esc(ex.id)}" data-delta="1">${ICONS.plus}</button>
+      <input class="field center" value="${esc(ex.reps)}" aria-label="Rep range for ${esc(ex.name)}" data-keep="ex-reps" data-ex="${esc(ex.id)}">
+    </div>
+    <div class="sets">${rows}</div>
+    ${lastLine}
+  </section>`;
+}
+
+function renderLog() {
+  const sessions = store.sessions.filter(isLogged).slice().sort((a, b) => b.updatedAt - a.updatedAt);
+  if (!sessions.length) {
+    return `<div class="empty-card"><h2>Nothing logged</h2><p>Finish a session and it will sit here.</p></div>`;
+  }
+  const cards = sessions.map((s) => {
+    const day = dayById(s.dayId);
+    const open = ui.logOpen === s.id;
+    const ids = [...planFor(s.dayId, store.plans).map((e) => e.id), ...Object.keys(s.sets).filter((id) => !planFor(s.dayId, store.plans).some((e) => e.id === id))];
+    const detail = open ? `<div class="log-detail"><p class="vol">Volume ${Math.round(sessionVolume(s)).toLocaleString()} ${esc(s.unit)}</p><ul>${ids.map((id) => {
+      const rows = (s.sets[id] ?? []).filter((e) => e.weight.trim() || e.reps.trim() || e.done);
+      if (!rows.length) return "";
+      const ex = findExercise(id, store.plans, store.library);
+      return `<li><p class="ex-l">${esc(ex?.name ?? "Exercise")}</p><p class="sets-l">${esc(rows.map((e) => `${e.weight || "—"}×${e.reps || "—"}`).join("  ·  "))} ${esc(s.unit)}</p></li>`;
+    }).join("")}</ul></div>` : "";
+    return `<article class="card">
+      <button type="button" class="log-row" data-act="toggle-log" data-id="${esc(s.id)}">
+        <div class="log-main"><h3>${esc(day.name)}</h3><p>${esc(fmtEEE(s.date))}${s.finished ? "" : " · in progress"}</p></div>
+        <div class="log-right"><p class="num">${doneCount(s)}</p><p class="lbl">sets</p></div>
+      </button>${detail}
+    </article>`;
+  }).join("");
+  return `<div class="stack"><h2 class="page-title">Log</h2>${cards}</div>`;
+}
+
+function renderLifts() {
+  if (ui.liftId) {
+    const items = DAYS.filter((d) => !d.rest).flatMap((d) => planFor(d.id, store.plans).map((ex) => ({ day: d, exercise: ex })));
+    const found = items.find((x) => x.exercise.id === ui.liftId);
+    if (found) return renderLiftDetail(found.exercise, found.day.name, liftPoints(store.sessions, found.exercise.id));
+  }
+  const items = DAYS.filter((d) => !d.rest).flatMap((d) => planFor(d.id, store.plans).map((ex) => ({ day: d, exercise: ex })));
+  const groups = {};
+  for (const item of items) (groups[item.day.id] ??= []).push(item.exercise);
+  const sections = Object.entries(groups).map(([dayId, exercises]) => {
+    const rows = exercises.map((ex) => {
+      const pts = liftPoints(store.sessions, ex.id);
+      const last = pts.at(-1);
+      const prev = pts.at(-2);
+      const delta = last && prev && last.unit === prev.unit ? Math.round((last.weight - prev.weight) * 4) / 4 : null;
+      return `<button type="button" class="lift-row" data-act="open-lift" data-id="${esc(ex.id)}">
+        <span class="lift-name">${esc(ex.name)}</span>
+        <span class="lift-right">
+          <span class="num" style="display:block;font-family:var(--font-display);font-size:1.25rem;line-height:1;color:var(--fg);font-variant-numeric:tabular-nums">${last ? last.weight : "—"}</span>
+          <span class="lift-sub">${last ? `${esc(last.unit)} × ${esc(last.reps)}` : "no sets"}${delta != null && delta !== 0 ? `  ${delta > 0 ? "+" : ""}${delta}` : ""}</span>
+        </span>
+      </button>`;
+    }).join("");
+    return `<section><h3 class="lift-group-title" style="margin:0 0 .5rem;font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--muted)">${esc(dayById(dayId).short)}</h3><div class="lift-list">${rows}</div></section>`;
+  }).join("");
+  return `<div class="page-stack"><h2 class="page-title">Lifts</h2>${sections}</div>`;
+}
+
+function renderLiftDetail(ex, dayName, points) {
+  const sameUnit = points.every((p) => p.unit === points[0]?.unit);
+  let chart;
+  if (points.length >= 2 && sameUnit) {
+    const xs = points.map((_, i) => i);
+    const ys = points.map((p) => p.weight);
+    const min = Math.min(...ys) - 5, max = Math.max(...ys) + 5;
+    const w = 300, h = 140, pad = 12;
+    const coords = points.map((p, i) => {
+      const x = pad + (i / (points.length - 1)) * (w - pad * 2);
+      const y = pad + (1 - (p.weight - min) / (max - min || 1)) * (h - pad * 2);
+      return `${x},${y}`;
+    });
+    const dots = points.map((p, i) => {
+      const x = pad + (i / (points.length - 1)) * (w - pad * 2);
+      const y = pad + (1 - (p.weight - min) / (max - min || 1)) * (h - pad * 2);
+      return `<circle cx="${x}" cy="${y}" r="3" fill="currentColor"/>`;
+    }).join("");
+    chart = `<div class="chart card"><svg viewBox="0 0 ${w} ${h}" preserveAspectRatio="none"><polyline fill="none" stroke="currentColor" stroke-width="2" points="${coords.join(" ")}"/>${dots}</svg></div>`;
+  } else {
+    chart = `<p class="banner">${points.length === 0 ? "Log this lift twice and the line shows up." : "One session so far. Log it again to see the line."}</p>`;
+  }
+  const hist = points.length ? `<ul class="history-list">${[...points].reverse().map((p) =>
+    `<li><span class="when">${esc(p.label)}</span><span class="val">${esc(p.weight)}<span>${esc(p.unit)} × ${esc(p.reps)}</span></span></li>`
+  ).join("")}</ul>` : "";
+  return `<div class="lift-pages">
+    <button type="button" class="back-pill" data-act="lifts-back">All lifts</button>
+    <div><p class="lede" style="margin:0">${esc(dayName)}</p><h2 class="page-title">${esc(ex.name)}</h2></div>
+    ${chart}${hist}
+  </div>`;
+}
+
+function renderVolume() {
+  const { rows, unassigned } = volumeRows(store.plans);
+  const max = Math.max(1, ...rows.map((r) => r.sets));
+  const list = rows.map((row) => {
+    const open = ui.volumeOpen === row.id;
+    const sources = open ? `<ul class="vol-sources">${row.sources.length === 0
+      ? `<li class="lede" style="margin:0">No work yet.</li>`
+      : row.sources.map((s) => `<li><p class="src-name"><span class="src-day">${esc(s.day)}</span> ${esc(s.name)}</p><p class="tabular" style="margin:0;color:var(--muted);flex-shrink:0">${s.sets}</p></li>`).join("")
+    }</ul>` : "";
+    return `<li class="card vol-card">
+      <button type="button" class="log-row" aria-expanded="${open}" data-act="toggle-vol" data-id="${esc(row.id)}">
+        <div class="log-main"><div class="vol-top"><p class="vol-name">${esc(row.name)}</p><p class="vol-sets">${row.sets}</p></div>
+        <div class="bar"><span style="width:${Math.round(row.sets / max * 100)}%"></span></div></div>
+      </button>${sources}
+    </li>`;
+  }).join("");
+  const leftover = unassigned.length ? `<section class="card ex"><h3 style="margin:0;font-size:1rem;font-weight:500">Not counted yet</h3><p class="lede">Pick a muscle so these sets land in the totals.</p><ul style="margin:.75rem 0 0;padding:0;list-style:none;display:flex;flex-direction:column;gap:1rem">${unassigned.map((n) =>
+    `<li><p style="margin:0;font-size:.875rem">${esc(n.day)} · ${esc(n.name)}<span style="color:var(--muted)"> · ${n.sets} sets</span></p><div class="muscle-row">${MUSCLES.map((m) => {
+      const has = (findExercise(n.exerciseId, store.plans, store.library)?.muscles ?? []).includes(m.id);
+      return `<button type="button" class="pill${has ? " on" : ""}" data-act="assign-muscle" data-day="${esc(n.dayId)}" data-ex="${esc(n.exerciseId)}" data-muscle="${esc(m.id)}">${esc(m.name)}</button>`;
+    }).join("")}</div></li>`
+  ).join("")}</ul></section>` : "";
+  return `<div class="stack"><div><h2 class="page-title">Weekly sets</h2><p class="lede">Counts the plan, not what you logged. Adding a set or an exercise updates this. A set counts for every muscle that exercise trains.</p></div><ul class="stack-3" style="list-style:none;margin:0;padding:0">${list}</ul>${leftover}</div>`;
+}
+
+function renderCheckIn() {
+  const todayStr = today();
+  const weeks = checkInWeeks(store.weights, store.checkIns, todayStr);
+  const sections = weeks.map((monday) => {
+    const days = DOW_MON.map((_, i) => addDays(monday, i));
+    const wAvg = avg(days.map((d) => parseNum(store.weights[d] ?? "")).filter((n) => n != null && n > 0));
+    const sAvg = avg(days.map((d) => parseNum(store.checkIns[d]?.steps ?? "")).filter((n) => n != null && n > 0));
+    const slAvg = avg(days.map((d) => parseNum(store.checkIns[d]?.sleep ?? "")).filter((n) => n != null && n > 0));
+    const rAvg = avg(days.map((d) => parseNum(store.checkIns[d]?.recovery ?? "")).filter((n) => n != null && n > 0));
+    const rows = DOW_MON.map((label, i) => {
+      const date = days[i];
+      const future = date > todayStr;
+      const ci = store.checkIns[date] ?? { steps: "", sleep: "", recovery: "" };
+      return `<div class="check-day">
+        <div class="check-head"><p class="dow">${esc(label)}</p><p class="dt${date === todayStr ? " today" : ""}">${esc(fmtEEE(date).split(" ").slice(1).join(" "))}</p></div>
+        <div class="check-grid">
+          ${field("Weight, " + store.unit, `${label} ${date} weight`, store.weights[date] ?? "", future, `weight:${date}`)}
+          ${field("Steps", `${label} ${date} steps`, ci.steps, future, `steps:${date}`)}
+          ${field("Sleep, hours", `${label} ${date} sleep`, ci.sleep, future, `sleep:${date}`)}
+          ${field("Recovery, 1–10", `${label} ${date} recovery`, ci.recovery, future, `recovery:${date}`)}
+        </div>
+      </div>`;
+    }).join("");
+    return `<section class="card check-sec">
+      <h3>${esc(weekRangeLabel(monday))}</h3>
+      <div>${rows}</div>
+      <div class="avg-grid">
+        <div><p class="avg-label">Weight</p><p class="avg-val">${esc(fmtAvg(wAvg))}${store.unit ? `<span>${esc(store.unit)}</span>` : ""}</p></div>
+        <div><p class="avg-label">Steps</p><p class="avg-val">${esc(fmtAvg(sAvg, 0))}</p></div>
+        <div><p class="avg-label">Sleep</p><p class="avg-val">${esc(fmtAvg(slAvg))}<span>h</span></p></div>
+        <div><p class="avg-label">Recovery</p><p class="avg-val">${esc(fmtAvg(rAvg))}</p></div>
+      </div>
+    </section>`;
+  }).join("");
+  return `<div class="stack"><div><h2 class="page-title">Check-in</h2><p class="lede">Every day. Weight, steps, sleep, and recovery from 1 to 10. Sunday shows the week average.</p></div>${sections}</div>`;
+}
+
+function field(label, aria, value, disabled, keep) {
+  return `<label class="flabel">${esc(label)}<input inputmode="decimal" aria-label="${esc(aria)}" value="${esc(value)}" ${disabled ? "disabled" : ""} placeholder="—" data-keep="${esc(keep)}"></label>`;
+}
+
+function renderMeals() {
+  const meals = normalizeMeals(store.meals);
+  store.meals = meals;
+  const foods = [...FOODS, ...store.customFoods];
+  const dayTotal = meals.reduce((acc, meal) => addMacros(acc, mealMacros(meal, store.customFoods)), { ...ZERO_MACROS });
+  const cards = meals.map((meal, idx) => {
+    const macros = mealMacros(meal, store.customFoods);
+    const open = ui.mealOpen === meal.id;
+    const q = ui.mealQuery.trim().toLowerCase();
+    const matches = q
+      ? foods.filter((f) => f.name.toLowerCase().includes(q)).sort((a, b) => +!a.name.toLowerCase().startsWith(q) - +!b.name.toLowerCase().startsWith(q) || a.name.localeCompare(b.name)).slice(0, 8)
+      : [];
+    const items = meal.items.map((item) => {
+      const food = foodById(item.foodId, store.customFoods);
+      return `<div class="meal-item">
+        <div class="meal-item-top"><p>${esc(food?.name ?? "Removed food")}</p><button type="button" class="rm" data-act="rm-item" data-meal="${esc(meal.id)}" data-item="${esc(item.id)}">Remove</button></div>
+        <div class="grams-row"><input inputmode="decimal" aria-label="Grams of ${esc(food?.name ?? "food")}" value="${esc(String(item.grams))}" data-keep="grams" data-meal="${esc(meal.id)}" data-item="${esc(item.id)}"><span>${esc(food?.unit || "g")}</span></div>
+      </div>`;
+    }).join("");
+    const search = open ? `<div class="mt-4" style="border-top:1px solid var(--line);padding-top:.75rem;position:relative">
+      <div class="search-row">
+        <input class="field q" value="${esc(ui.mealQuery)}" placeholder="Type a food" aria-label="Search foods for ${esc(meal.name)}" data-keep="mealQuery">
+        <input class="field" style="width:6rem;flex:0 0 6rem;text-align:center" inputmode="decimal" aria-label="Amount to add" placeholder="Amount" value="${esc(ui.mealAmount)}" data-keep="mealAmount">
+      </div>
+      ${q ? `<ul class="suggest">${matches.length ? matches.map((f) =>
+        `<li><button type="button" data-act="add-item" data-meal="${esc(meal.id)}" data-food="${esc(f.id)}"><span>${esc(f.name)}</span><span class="amt">${esc(fmtMacro(f.portion))} ${esc(f.unit)}</span></button></li>`
+      ).join("") : `<li class="none">No match.</li>`}</ul>` : ""}
+      <button type="button" class="linkish" data-act="toggle-new-food">${ui.newFoodOpen ? "Close" : "New food"}</button>
+      ${ui.newFoodOpen ? `<div class="new-food">
+        <input class="field span2" value="${esc(ui.newFood.name)}" placeholder="Name" aria-label="New food name" data-keep="nf-name">
+        ${nf("Kcal / 100g", ui.newFood.kcal, "nf-kcal")}${nf("Protein", ui.newFood.protein, "nf-protein")}${nf("Carbs", ui.newFood.carbs, "nf-carbs")}${nf("Fat", ui.newFood.fat, "nf-fat")}
+        <button type="button" class="btn-primary span2" data-act="create-food" data-meal="${esc(meal.id)}">Add to meal</button>
+      </div>` : ""}
+    </div>` : `<button type="button" class="btn-line mt-4" data-act="open-meal" data-id="${esc(meal.id)}">Add food</button>`;
+    return `<section class="card meal${open ? " z" : ""}">
+      <div style="display:flex;align-items:baseline;justify-content:space-between;gap:.75rem"><p class="meal-num">${idx + 1}</p></div>
+      <input class="meal-name" value="${esc(meal.name)}" aria-label="Name for meal ${idx + 1}" data-keep="meal-name" data-meal="${esc(meal.id)}">
+      ${items}
+      <div class="meal-total"><p class="kicker" style="letter-spacing:.18em">Meal total</p><div class="mt-2">${macrosBlock(macros)}</div></div>
+      ${search}
+    </section>`;
+  }).join("");
+  return `<div class="page-stack-lg">
+    <div><h2 class="page-title">Meals</h2><p class="lede">Six meals. Each one shows its own macros. The figures above are the full day.</p></div>
+    <section class="day-total">
+      <p class="kicker">Day total</p>
+      <p class="kcal">${esc(fmtMacro(dayTotal.kcal, true))}<span>kcal</span></p>
+      <div class="macro-grid">${macroCell("Protein", dayTotal.protein)}${macroCell("Carbs", dayTotal.carbs)}${macroCell("Fat", dayTotal.fat)}</div>
+    </section>
+    ${cards}
+  </div>`;
+}
+
+function nf(label, value, keep) {
+  return `<label class="flabel">${esc(label)}<input inputmode="decimal" value="${esc(value)}" data-keep="${esc(keep)}"></label>`;
+}
+
+function renderSettings() {
+  if (!ui.settings) return "";
+  return `<div class="sheet-bg">
+    <button type="button" class="sheet-dismiss" aria-label="Close settings" data-act="close-settings"></button>
+    <div class="sheet">
+      <h2>Settings</h2>
+      <p class="hint">Units for new sessions</p>
+      <div class="unit-grid">${["kg", "lb"].map((u) =>
+        `<button type="button" class="${store.unit === u ? "btn-primary" : "btn-line"}" data-act="unit" data-unit="${u}">${u}</button>`
+      ).join("")}</div>
+      <label>Block started<input class="field mt-2" type="date" value="${esc(store.startDate)}" data-keep="startDate"></label>
+      <button type="button" class="btn-line mt-3" data-act="start-today">Start next block today</button>
+      <button type="button" class="btn-primary mt-3" data-act="export">Export for Google Sheets</button>
+      <p class="lede">Downloads a CSV. In Google Sheets use File, Import, then Upload.</p>
+      <button type="button" class="clear" data-act="clear-log">Clear log</button>
+    </div>
+  </div>`;
+}
+
+function render() {
+  const root = document.getElementById("app");
+  const focused = document.activeElement;
+  const keepId = focused && focused.dataset && focused.dataset.keep ? keepFocusKey(focused) : null;
+  const selStart = focused && focused.selectionStart;
+  const selEnd = focused && focused.selectionEnd;
+
+  let main = "";
+  if (ui.tab === "train") main = renderTrain();
+  else if (ui.tab === "log") main = renderLog();
+  else if (ui.tab === "lifts") main = renderLifts();
+  else if (ui.tab === "volume") main = renderVolume();
+  else if (ui.tab === "weight") main = renderCheckIn();
+  else if (ui.tab === "meals") main = renderMeals();
+
+  root.innerHTML = `<div class="app">${renderHeader()}<main>${main}</main>${renderTabs()}${renderSettings()}</div>`;
+
+  if (keepId) {
+    const el = findKeep(keepId);
+    if (el) {
+      el.focus();
+      if (typeof selStart === "number" && el.setSelectionRange) {
+        try { el.setSelectionRange(selStart, selEnd); } catch (e) {}
+      }
+    }
+  }
+}
+
+function keepFocusKey(el) {
+  return [el.dataset.keep, el.dataset.ex, el.dataset.i, el.dataset.meal, el.dataset.item].filter(Boolean).join("|");
+}
+
+function findKeep(key) {
+  return [...document.querySelectorAll("[data-keep]")].find((el) => keepFocusKey(el) === key);
+}
+
+function onClick(e) {
+  const tab = e.target.closest("[data-tab]");
+  if (tab) {
+    ui.tab = tab.dataset.tab;
+    ui.liftId = null;
+    render();
+    return;
+  }
+  const btn = e.target.closest("[data-act]");
+  if (!btn) return;
+  const act = btn.dataset.act;
+  if (act === "settings") ui.settings = true;
+  else if (act === "close-settings") ui.settings = false;
+  else if (act === "unit") { store.unit = btn.dataset.unit; persist(); }
+  else if (act === "start-today") { store.startDate = today(); persist(); }
+  else if (act === "export") { exportCsv(); ui.settings = false; }
+  else if (act === "clear-log") {
+    if (window.confirm("Clear every logged session on this phone?")) {
+      store.sessions = [];
+      store.startDate = today();
+      persist();
+      ui.settings = false;
+      ensureSession();
+    }
+  }
+  else if (act === "prev-day") { ui.date = addDays(ui.date, -1); ui.dayId = dayByWeekday(weekday(ui.date)).id; }
+  else if (act === "next-day") { ui.date = addDays(ui.date, 1); ui.dayId = dayByWeekday(weekday(ui.date)).id; }
+  else if (act === "chip") ui.dayId = btn.dataset.id;
+  else if (act === "copy-last") copyLast();
+  else if (act === "finish") { if (current) saveSession({ ...current, finished: true }); }
+  else if (act === "toggle-done") {
+    if (!current) return;
+    const row = current.sets[btn.dataset.ex]?.[Number(btn.dataset.i)];
+    if (row) patchSet(btn.dataset.ex, Number(btn.dataset.i), { done: !row.done });
+  }
+  else if (act === "weight") patchSet(btn.dataset.ex, Number(btn.dataset.i), { weight: adjustWeight(current?.sets[btn.dataset.ex]?.[Number(btn.dataset.i)]?.weight ?? "", Number(btn.dataset.delta)) });
+  else if (act === "move") moveExercise(btn.dataset.ex, Number(btn.dataset.delta));
+  else if (act === "remove") removeExercise(btn.dataset.ex);
+  else if (act === "adj-sets") {
+    const ex = planFor(ui.dayId, store.plans).find((x) => x.id === btn.dataset.ex);
+    if (ex) updateExercise(ex.id, { sets: ex.sets + Number(btn.dataset.delta) });
+  }
+  else if (act === "add-sets") ui.addSets = Math.min(10, Math.max(1, ui.addSets + Number(btn.dataset.delta)));
+  else if (act === "toggle-muscle") {
+    ui.addMuscles = ui.addMuscles.includes(btn.dataset.id)
+      ? ui.addMuscles.filter((id) => id !== btn.dataset.id)
+      : [...ui.addMuscles, btn.dataset.id];
+  }
+  else if (act === "toggle-log") ui.logOpen = ui.logOpen === btn.dataset.id ? null : btn.dataset.id;
+  else if (act === "open-lift") ui.liftId = btn.dataset.id;
+  else if (act === "lifts-back") ui.liftId = null;
+  else if (act === "toggle-vol") ui.volumeOpen = ui.volumeOpen === btn.dataset.id ? null : btn.dataset.id;
+  else if (act === "assign-muscle") {
+    const ex = planFor(btn.dataset.day, store.plans).find((x) => x.id === btn.dataset.ex);
+    const currentMuscles = ex?.muscles ?? [];
+    const muscles = currentMuscles.includes(btn.dataset.muscle)
+      ? currentMuscles.filter((id) => id !== btn.dataset.muscle)
+      : [...currentMuscles, btn.dataset.muscle];
+    const dayIdWas = ui.dayId;
+    ui.dayId = btn.dataset.day;
+    updateExercise(btn.dataset.ex, { muscles });
+    ui.dayId = dayIdWas;
+  }
+  else if (act === "open-meal") { ui.mealOpen = btn.dataset.id; ui.mealQuery = ""; ui.mealAmount = ""; ui.newFoodOpen = false; }
+  else if (act === "toggle-new-food") ui.newFoodOpen = !ui.newFoodOpen;
+  else if (act === "add-item") {
+    const food = foodById(btn.dataset.food, store.customFoods);
+    const n = Number(ui.mealAmount);
+    const grams = Number.isFinite(n) && n > 0 ? n : food?.portion || 100;
+    store.meals = normalizeMeals(store.meals).map((m) => m.id === btn.dataset.meal ? { ...m, items: [...m.items, { id: crypto.randomUUID(), foodId: btn.dataset.food, grams }] } : m);
+    ui.mealQuery = "";
+    ui.mealAmount = "";
+    ui.newFoodOpen = false;
+    persist();
+  }
+  else if (act === "create-food") {
+    const t = ui.newFood.name.trim();
+    const kcal = Number(ui.newFood.kcal), protein = Number(ui.newFood.protein), carbs = Number(ui.newFood.carbs), fat = Number(ui.newFood.fat);
+    if (!t || ![kcal, protein, carbs, fat].every((n) => Number.isFinite(n) && n >= 0)) return;
+    const food = { id: `food-${crypto.randomUUID()}`, name: t, portion: 100, unit: "g", kcal, protein, carbs, fat };
+    store.customFoods = [...store.customFoods, food];
+    const n = Number(ui.mealAmount);
+    store.meals = normalizeMeals(store.meals).map((m) => m.id === btn.dataset.meal ? { ...m, items: [...m.items, { id: crypto.randomUUID(), foodId: food.id, grams: Number.isFinite(n) && n > 0 ? n : 100 }] } : m);
+    ui.mealQuery = "";
+    ui.mealAmount = "";
+    ui.newFoodOpen = false;
+    ui.newFood = { name: "", kcal: "", protein: "", carbs: "", fat: "" };
+    persist();
+  }
+  else if (act === "rm-item") {
+    store.meals = normalizeMeals(store.meals).map((m) => m.id === btn.dataset.meal ? { ...m, items: m.items.filter((i) => i.id !== btn.dataset.item) } : m);
+    persist();
+  }
+  render();
+}
+
+function onSubmit(e) {
+  const form = e.target.closest("[data-act=add-ex]");
+  if (!form) return;
+  e.preventDefault();
+  addExercise();
+  render();
+}
+
+function onInput(e) {
+  const el = e.target;
+  const keep = el.dataset.keep;
+  if (!keep) return;
+  const val = el.value;
+  if (keep === "addName") ui.addName = val;
+  else if (keep === "addReps") ui.addReps = val;
+  else if (keep === "ex-reps") updateExercise(el.dataset.ex, { reps: val });
+  else if (keep === "target") updateExercise(el.dataset.ex, { setIndex: Number(el.dataset.i), setRange: val });
+  else if (keep === "weight") patchSet(el.dataset.ex, Number(el.dataset.i), { weight: val });
+  else if (keep === "reps") patchSet(el.dataset.ex, Number(el.dataset.i), { reps: val });
+  else if (keep === "startDate") { store.startDate = val; persist(); }
+  else if (keep.startsWith("weight:")) {
+    const date = keep.slice(7);
+    if (val.trim()) store.weights[date] = val; else delete store.weights[date];
+    persist();
+  } else if (keep.startsWith("steps:") || keep.startsWith("sleep:") || keep.startsWith("recovery:")) {
+    const [field, date] = keep.split(":");
+    const cur = store.checkIns[date] ?? { steps: "", sleep: "", recovery: "" };
+    const next = { ...cur, [field]: val };
+    if (!next.steps.trim() && !next.sleep.trim() && !next.recovery.trim()) delete store.checkIns[date];
+    else store.checkIns[date] = next;
+    persist();
+  } else if (keep === "meal-name") {
+    store.meals = normalizeMeals(store.meals).map((m) => m.id === el.dataset.meal ? { ...m, name: val } : m);
+    persist();
+  } else if (keep === "grams") {
+    const n = Number(val);
+    store.meals = normalizeMeals(store.meals).map((m) => m.id === el.dataset.meal ? { ...m, items: m.items.map((i) => i.id === el.dataset.item ? { ...i, grams: Number.isFinite(n) && n >= 0 ? n : 0 } : i) } : m);
+    persist();
+  } else if (keep === "mealQuery") { ui.mealQuery = val; render(); return; }
+  else if (keep === "mealAmount") ui.mealAmount = val;
+  else if (keep === "nf-name") ui.newFood.name = val;
+  else if (keep === "nf-kcal") ui.newFood.kcal = val;
+  else if (keep === "nf-protein") ui.newFood.protein = val;
+  else if (keep === "nf-carbs") ui.newFood.carbs = val;
+  else if (keep === "nf-fat") ui.newFood.fat = val;
+
+  if (keep === "addName" || keep === "addReps") {
+    const btn = document.querySelector("[data-act=add-ex] .btn-primary");
+    if (btn) btn.disabled = !ui.addName.trim() || ui.addMuscles.length === 0;
+  }
+  if (ui.tab === "train") {
+    const p = document.querySelector(".progress");
+    if (p && current) {
+      const exercises = planFor(ui.dayId, store.plans);
+      p.textContent = `${doneCount(current)}/${exercises.reduce((n, e) => n + e.sets, 0)}`;
+    }
+  }
+}
+
+function onBlur(e) {
+  const el = e.target;
+  if (el.dataset.keep === "ex-reps") {
+    const next = el.value.trim() || "8–12";
+    const ex = planFor(ui.dayId, store.plans).find((x) => x.id === el.dataset.ex);
+    if (ex && next !== ex.reps) updateExercise(ex.id, { reps: next });
+    else if (!el.value.trim()) { el.value = next; updateExercise(el.dataset.ex, { reps: next }); }
+    render();
+  } else if (el.dataset.keep === "target") {
+    if (!el.value.trim()) {
+      const ex = planFor(ui.dayId, store.plans).find((x) => x.id === el.dataset.ex);
+      updateExercise(el.dataset.ex, { setIndex: Number(el.dataset.i), setRange: ex?.reps || "8–12" });
+      render();
+    }
+  }
+}
+
+document.addEventListener("click", onClick);
+document.addEventListener("submit", onSubmit);
+document.addEventListener("input", onInput);
+document.addEventListener("blur", onBlur, true);
+render();
+
+</script>
+</body>
+</html>
